@@ -2,9 +2,28 @@
 
 @section('content')
     <!-- Thông báo -->
-    <div class="bg-red-100 text-red-700 p-2 text-sm">
+    <div class="bg-red-100 text-red-700 my-4 text-sm flex justify-between p-4">
         Chào mừng đến với game, thẻ cào, thẻ game, thẻ online. Đổi thẻ cào thành tiền mặt với chiết khấu hợp lý. Liên hệ
         ngay để được hỗ trợ đổi thẻ!
+    </div>
+    <h2 class="py-4 text-2xl font-bold text-center">Đổi thẻ cào</h2>
+    <div class="flex flex-col space-y-2">
+        <span class="text-sm text-red-600 font-bold">
+            - không nhận api từ game bài, thẻ ăn cắp, lừa đảo, không rõ nguồn gốc, thẻ rút từ visa,credit card...phát hiện
+            khóa vv không hoàn số dư
+        </span>
+        <span class="text-sm">
+            - Vui lòng đọc <span class="text-blue-600 font-bold">Điều Khoản</span> <span class="font-bold">tại đây</span>, Đổi
+            thẻ sang thẻ game rẻ hơn tại 365pay.vn
+        </span>
+        <span class="text-sm">
+            -<span class="text-red-600 font-bold">Tạo web con đổi thẻ, bán thẻ miễn phí</span> <span class="font-bold">tại
+                đây</span>. Hướng dẫn tích hợp API gạch thẻ tự động cho Shop: <span class="font-bold">tại đây</span>
+        </span>
+        <span class="text-sm">
+            Lịch sử nạp thẻ <span class="font-bold">tại đây</span>, Thông kê <span class="font-bold">tại đây</span>, Nhận
+            thông báo Telegram <span class="font-bold">tại đây</span>
+        </span>
     </div>
 
     <!-- Header với nút và thông tin người dùng -->
