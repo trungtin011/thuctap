@@ -15,7 +15,8 @@
     <header class="bg-white shadow">
         <div class="container mx-auto flex justify-between items-center py-3" style="max-width: 1150px">
             <div class="flex items-center">
-                <img alt="Company logo" class="h-10" height="50" src="{{ asset('logo/logo.png') }}" />
+                <img src="{{ asset('logo/Logo.png') }}" class="w-10 flex-none">
+                <strong class="capitalize ml-1 flex-1">365Pay</strong>
             </div>
             @if (Auth::guard('web')->check() || Auth::guard('admin')->check())
                 <div class="flex space-x-2">

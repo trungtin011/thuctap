@@ -64,10 +64,7 @@
             </div>
             <div class="w-1/2 pl-10">
                 <div class="max-w-lg mx-auto p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
-                    <p>Tài khoản bị tạm khóa do đăng nhập sai nhiều lần, vui lòng SMS mở khóa theo cú pháp:</p>
-                    <p><strong>NS TSR MK gửi 8066</strong> (lấy lại mk) hoặc <strong>NS TSR MKC2 gửi 8066</strong> (lấy lại
-                        mkc2)
-                    </p>
+                    <p>Chức năng mở khóa tài khoản bằng SMS đang được phát triển và sẽ có trong phiên bản chính thức</p>
                 </div>
             </div>
         </div>

@@ -24,10 +24,22 @@ class LoginController extends Controller
     // Đăng nhập người dùng
     public function loginUser(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|min:8',
-        ]);
+        $errors = [];
+
+        // Kiểm tra email
+        if (empty($request->email) || !filter_var($request->email, FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Email không hợp lệ.';
+        }
+
+        // Kiểm tra password
+        if (empty($request->password) || strlen($request->password) < 8) {
+            $errors['password'] = 'Mật khẩu phải có ít nhất 8 ký tự.';
+        }
+
+        if (!empty($errors)) {
+            return back()->withErrors($errors)->withInput();
+        }
+
 
         $user = User::where('email', $request->email)->first();
         if ($user && Hash::check($request->password, $user->password)) {
