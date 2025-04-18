@@ -4,7 +4,8 @@ use Illuminate\Support\Facades\Route;
 // Auth
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
-
+// Cards
+use App\Http\Controllers\User\CardsController;
 // Admin
 use App\Http\Controllers\Admin\DashboardController;
 
@@ -49,3 +50,10 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/404', function () {
     return view('errors.404');
 })->name('404');
+
+// Cards routes 
+Route::middleware(['auth'])->group(function () {
+    Route::post('/cards/submit', [CardsController::class, 'submitCard'])->name('cards.submit');
+    Route::post('/cards/callback', [CardsController::class, 'callback'])->name('callback.card');
+    Route::get('/cards/history', [CardsController::class, 'history'])->name('cards.history');
+});

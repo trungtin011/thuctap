@@ -32,4 +32,14 @@ class User extends Authenticatable
     protected $attributes = [
         'pin' => '', // Mặc định là chuỗi rỗng
     ];
+
+    public function cards()
+    {
+        return $this->hasMany(Card::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
 }
