@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UserControllerUser;
 
 // User
+use App\Http\Controllers\User\ProfileController;
 
 Route::middleware(['check.role:admin'])->group(function () {
     Route::prefix('admin')->group(function () {
@@ -34,6 +35,10 @@ Route::middleware(['check.role:superadmin'])->group(function () {
     });
 });
 
+Route::prefix('user')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+});
+
 // Routes đăng ký cho người dùng thông thường
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
@@ -50,7 +55,7 @@ Route::post('/admin/login', [LoginController::class, 'loginAdmin'])->name('admin
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Route trang chủ
-Route::get('/home', function () {
+Route::get('/', function () {
     return view('index');
 })->name('home');
 

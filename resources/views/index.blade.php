@@ -2,8 +2,8 @@
 
 @section('content')
     <!-- Thông báo -->
-    <div class="bg-red-100 text-red-700 my-4 text-sm flex justify-between p-4">
-        Chào mừng đến với game, thẻ cào, thẻ game, thẻ online. Đổi thẻ cào thành tiền mặt với chiết khấu hợp lý. Liên hệ
+    <div class="bg-green-100 text-dark border-l-4 border-green-700 my-4 text-sm flex justify-between p-4">
+        Chào mừng đến với 365pay.vn - Mua thẻ cào, thẻ game, thẻ online. Đổi thẻ cào thành tiền mặt với chiết khấu hợp lý. Liên hệ
         ngay để được hỗ trợ đổi thẻ!
     </div>
     <h2 class="py-4 text-2xl font-bold text-center">Đổi thẻ cào</h2>
@@ -28,19 +28,19 @@
 
     <!-- Header với nút và thông tin người dùng -->
     <div class="flex justify-between items-center py-4">
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-2 w-full">
             <form action="" method="POST" class="flex items-center space-x-2 w-full">
-                <select class="border border-gray-300 rounded px-2 py-1 text-sm">
+                <select class="border border-gray-300 rounded px-2 py-1 text-sm w-1/4">
                     <option>Viettel</option>
                     <option>Vinaphone</option>
                     <option>Mobifone</option>
                 </select>
 
-                <input type="text" class="border border-gray-300 rounded px-2 py-1 text-sm" placeholder="Mã nạp">
+                <input type="text" class="border border-gray-300 rounded px-2 py-1 text-sm w-1/4" placeholder="Mã nạp">
 
-                <input type="text" class="border border-gray-300 rounded px-2 py-1 text-sm" placeholder="Số Serial">
+                <input type="text" class="border border-gray-300 rounded px-2 py-1 text-sm w-1/4" placeholder="Số Serial">
 
-                <select id="price" name="amount[]">
+                <select id="price" name="amount[]" class="border border-gray-300 rounded px-2 py-1 text-sm w-1/4">
                     <option name="">--- Mệnh giá ---</option>
                     <option value="10000">10,000
                         đ - Thực nhận 8,600
@@ -153,67 +153,67 @@
     <div class="mb-6">
         <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/100x50?text=Viettel" alt="Viettel" class="mx-auto">
+                <img src="" alt="Viettel" class="mx-auto">
                 <p class="text-sm mt-2">Thẻ Viettel</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/100x50?text=Vinaphone" alt="Vinaphone" class="mx-auto">
+                <img src="" alt="Vinaphone" class="mx-auto">
                 <p class="text-sm mt-2">Thẻ Vinaphone</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/100x50?text=Mobifone" alt="Mobifone" class="mx-auto">
+                <img src="" alt="Mobifone" class="mx-auto">
                 <p class="text-sm mt-2">Thẻ Mobifone</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/100x50?text=Vietnamobile" alt="Vietnamobile" class="mx-auto">
+                <img src="" alt="Vietnamobile" class="mx-auto">
                 <p class="text-sm mt-2">Thẻ Vietnamobile</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/100x50?text=Mobile" alt="Mobile" class="mx-auto">
+                <img src="" alt="Mobile" class="mx-auto">
                 <p class="text-sm mt-2">Thẻ Mobile</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/100x50?text=Garena" alt="Garena" class="mx-auto">
+                <img src="" alt="Garena" class="mx-auto">
                 <p class="text-sm mt-2">Thẻ Garena</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/100x50?text=Zing" alt="Zing" class="mx-auto">
+                <img src="" alt="Zing" class="mx-auto">
                 <p class="text-sm mt-2">Thẻ Zing</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/100x50?text=Vcoin" alt="Vcoin" class="mx-auto">
+                <img src="" alt="Vcoin" class="mx-auto">
                 <p class="text-sm mt-2">Thẻ Vcoin</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/100x50?text=Gate" alt="Gate" class="mx-auto">
+                <img src="" alt="Gate" class="mx-auto">
                 <p class="text-sm mt-2">Thẻ Gate</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/100x50?text=FunCard" alt="FunCard" class="mx-auto">
+                <img src="" alt="FunCard" class="mx-auto">
                 <p class="text-sm mt-2">Thẻ FunCard</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/100x50?text=Scoin" alt="Scoin" class="mx-auto">
+                <img src="" alt="Scoin" class="mx-auto">
                 <p class="text-sm mt-2">Thẻ Scoin</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/100x50?text=Gosu" alt="Gosu" class="mx-auto">
+                <img src="" alt="Gosu" class="mx-auto">
                 <p class="text-sm mt-2">Thẻ Gosu</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/100x50?text=Scoin" alt="Scoin" class="mx-auto">
+                <img src="" alt="Scoin" class="mx-auto">
                 <p class="text-sm mt-2">Thẻ Scoin</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/100x50?text=VegaID" alt="VegaID" class="mx-auto">
+                <img src="" alt="VegaID" class="mx-auto">
                 <p class="text-sm mt-2">Thẻ Vega ID</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/100x50?text=Appota" alt="Appota" class="mx-auto">
+                <img src="" alt="Appota" class="mx-auto">
                 <p class="text-sm mt-2">Thẻ Appota</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/100x50?text=Bit" alt="Bit" class="mx-auto">
+                <img src="" alt="Bit" class="mx-auto">
                 <p class="text-sm mt-2">Thẻ Bit</p>
             </div>
         </div>
@@ -224,23 +224,23 @@
         <h2 class="text-lg font-bold mb-2">Nạp tiền điện thoại, tiền game, mua vé data</h2>
         <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/50?text=FreeFire" alt="Free Fire" class="mx-auto">
+                <img src="" alt="Free Fire" class="mx-auto">
                 <p class="text-sm mt-2">Free Fire (Kim cương)</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/50?text=Viettel" alt="Viettel" class="mx-auto">
+                <img src="" alt="Viettel" class="mx-auto">
                 <p class="text-sm mt-2">Viettel (Nạp tiền)</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/50?text=PUBG" alt="PUBG" class="mx-auto">
+                <img src="" alt="PUBG" class="mx-auto">
                 <p class="text-sm mt-2">PUBG Mobile VN</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/50?text=Vinaphone" alt="Vinaphone" class="mx-auto">
+                <img src="" alt="Vinaphone" class="mx-auto">
                 <p class="text-sm mt-2">Vinaphone (Nạp tiền)</p>
             </div>
             <div class="border p-2 text-center">
-                <img src="https://via.placeholder.com/50?text=Ninja" alt="Ninja" class="mx-auto">
+                <img src="" alt="Ninja" class="mx-auto">
                 <p class="text-sm mt-2">Ninja King</p>
             </div>
         </div>
@@ -251,7 +251,7 @@
         <h2 class="text-lg font-bold mb-2">Tin tức</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div class="border p-2">
-                <img src="https://via.placeholder.com/150?text=Tin1" alt="Tin 1" class="w-full h-32 object-cover">
+                <img src="" alt="Tin 1" class="w-full h-32 object-cover">
                 <h3 class="text-sm font-bold mt-2">Công tác xử lý khách hàng</h3>
                 <p class="text-xs text-gray-600">Cập nhật thông tin xử lý khách hàng nhanh chóng...</p>
             </div>
