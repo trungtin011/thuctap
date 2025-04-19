@@ -12,7 +12,7 @@ use App\Http\Controllers\Admin\UserControllerUser;
 // User
 use App\Http\Controllers\User\ProfileController;
 
-use App\Http\Controllers\GoogleScraperController;
+use App\Http\Controllers\GoogleSearchController;
 
 
 Route::middleware(['check.role:admin'])->group(function () {
@@ -68,4 +68,4 @@ Route::get('/404', function () {
 })->name('404');
 
 
-Route::get('/google-search', [GoogleScraperController::class, 'searchGoogle'])->name('google.search');
+Route::get('/google-search', [GoogleSearchController::class, 'search'])->name('google.search');

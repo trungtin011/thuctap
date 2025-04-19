@@ -1,4 +1,6 @@
+@extends('layouts.navigation')
 
+@section('content')
     <form method="GET" action="{{ route('google.search') }}">
         <input type="text" name="keyword" value="{{ $keyword ?? '' }}" placeholder="Nhập từ khóa..." required>
         <button type="submit">Tìm kiếm</button>
@@ -14,5 +16,6 @@
             </div>
         @endforeach
     @else
-        <p>Không có kết quả.</p>
+        <p>Không tìm thấy kết quả phù hợp.</p>
     @endif
+@endsection
