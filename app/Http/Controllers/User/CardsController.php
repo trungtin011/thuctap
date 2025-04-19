@@ -13,55 +13,95 @@ use Illuminate\Http\Client\RequestException;
 
 class CardsController extends Controller
 {
-    // Gửi thẻ cào đến API
     public function submitCard(Request $request)
     {
+        // Validate request data
         $request->validate([
             'telco' => 'required|in:Viettel,Vinaphone,Mobifone',
             'amount' => 'required|integer|in:10000,20000,30000,50000,100000,200000,300000,500000,1000000',
-            'card_serial' => 'required|string|max:255',
-            'card_code' => 'required|string|max:255',
+            'card_serial' => 'required|string|min:10|max:20|regex:/^[0-9]+$/', // Numbers only
+            'card_code' => 'required|string|min:10|max:20|regex:/^[0-9]+$/', // Numbers only
         ]);
 
         $user = auth()->user();
 
-        // Prepare API request data
-        $requestData = [
-            'telco' => $request->telco,
-            'amount' => $request->amount,
-            'serial' => $request->card_serial, // API expects 'serial'
-            'code' => $request->card_code, // API expects 'code'
-            'request_id' => uniqid(),
-            'partner_id' => env('TSR_PARTNER_ID', '71433538534'),
-            'callback_url' => route('callback.card'),
-            'api_key' => env('TSR_API_KEY', '7b567b57851190d19e16b13bb976e899'),
+        // Map telco values to API expected format
+        $telcoMap = [
+            'Viettel' => 'VIETTEL',
+            'Vinaphone' => 'VINAPHONE',
+            'Mobifone' => 'MOBIFONE',
         ];
 
+        // Prepare API request data
+        $requestData = [
+            'telco' => $telcoMap[$request->telco],
+            'amount' => $request->amount,
+            'serial' => $request->card_serial,
+            'code' => $request->card_code,
+            'request_id' => uniqid($user->id . '_', true),
+            'partner_id' => env('TSR_PARTNER_ID'),
+            'command' => 'charging',
+        ];
+
+        // Generate signature
+        $partner_key = env('TSR_PARTNER_KEY');
+        $sign = md5($partner_key . $request->card_code . $request->card_serial);
+
         try {
-            // Gửi đến API
-            $response = Http::timeout(10)->post('https://api.thesieure.com/card/charge', $requestData);
+            // Send API request (GET with query string)
+            $response = Http::timeout(30)
+                ->withHeaders([
+                    'Accept' => 'application/json',
+                    'User-Agent' => 'Laravel/10.x',
+                ])
+                ->get('https://thesieure.com/chargingws/v2', [
+                    'sign' => $sign,
+                    'telco' => $requestData['telco'],
+                    'code' => $requestData['code'],
+                    'serial' => $requestData['serial'],
+                    'amount' => $requestData['amount'],
+                    'request_id' => $requestData['request_id'],
+                    'partner_id' => $requestData['partner_id'],
+                    'command' => $requestData['command'],
+                ]);
 
-            // Log API response for debugging
-            Log::info('API Response:', ['response' => $response->json(), 'status' => $response->status()]);
+            // Log API response
+            $json = $response->json();
+            Log::info('API Response:', [
+                'response' => $json,
+                'status' => $response->status(),
+                'request_data' => $requestData,
+                'sign' => $sign,
+            ]);
 
-            // Check if API request was successful
+            // Handle response
             if ($response->failed()) {
-                $errorMessage = $response->json()['message'] ?? 'Lỗi từ API: ' . $response->status();
-                Log::error('API Request Failed:', ['response' => $response->json(), 'status' => $response->status()]);
+                $errorMessage = $json['message'] ?? 'Lỗi từ API: ' . $response->status();
+                Log::error('API Request Failed:', [
+                    'response' => $json,
+                    'status' => $response->status(),
+                ]);
                 return back()->with('error', 'Gửi thẻ thất bại: ' . $errorMessage);
             }
 
-            // Lưu thông tin thẻ
-            Card::create([
-                'user_id' => $user->id,
-                'telco' => $request->telco,
-                'amount' => $request->amount,
-                'card_serial' => $request->card_serial,
-                'card_code' => $request->card_code,
-                'status' => 'pending',
-            ]);
-
-            return back()->with('success', 'Đã gửi thẻ, chờ xử lý...');
+            // Check API status
+            if ($json['status'] == 99) {
+                // Save card information
+                Card::create([
+                    'user_id' => $user->id,
+                    'telco' => $request->telco,
+                    'amount' => $request->amount,
+                    'card_serial' => $request->card_serial,
+                    'card_code' => $request->card_code,
+                    'status' => 'pending',
+                    'request_id' => $requestData['request_id'],
+                ]);
+                return back()->with('success', 'Gửi thẻ thành công, chờ xử lý...');
+            } else {
+                $errorMessage = $json['message'] ?? 'Lỗi không xác định từ API';
+                Log::error('API Status Error:', ['response' => $json]);
+                return back()->with('error', 'Gửi thẻ thất bại: ' . $errorMessage);
+            }
         } catch (RequestException $e) {
             Log::error('API Request Exception:', ['error' => $e->getMessage()]);
             if (strpos($e->getMessage(), 'Could not resolve host') !== false) {
@@ -71,34 +111,51 @@ class CardsController extends Controller
         }
     }
 
-    // Nhận callback từ đối tác
     public function callback(Request $request)
     {
         Log::info('CALLBACK THẺ CÀO:', $request->all());
 
+        // Verify callback signature
+        $callbackSign = $request->callback_sign;
+        $partner_key = env('TSR_PARTNER_KEY');
+        $expectedSign = md5($partner_key . $request->serial . $request->code);
+        if ($callbackSign !== $expectedSign) {
+            Log::error('Invalid callback signature', ['received' => $callbackSign, 'expected' => $expectedSign]);
+            return response('Invalid signature', 403);
+        }
+
         $serial = $request->serial;
         $code = $request->code;
-        $status = $request->status; // 'success' | 'fail'
-        $real_amount = $request->real_amount;
+        $status = $request->status; // 1: success, 2: wrong value, 3: wrong card, 99: pending
+        $real_amount = $request->amount;
+        $request_id = $request->request_id;
 
-        $card = Card::where('card_serial', $serial)->where('card_code', $code)->first();
+        $card = Card::where('card_serial', $serial)
+            ->where('card_code', $code)
+            ->where('request_id', $request_id)
+            ->first();
 
         if (!$card) {
-            Log::error('Card not found for serial: ' . $serial . ', code: ' . $code);
+            Log::error('Card not found', ['serial' => $serial, 'code' => $code, 'request_id' => $request_id]);
             return response('Card not found', 404);
         }
 
-        $card->status = $status;
-        $card->response = $real_amount; // Store real_amount as text in response column
+        // Map API status to internal status
+        $card->status = match ($status) {
+            '1' => 'success',
+            '2', '3' => 'failed',
+            '99' => 'pending',
+            default => 'failed',
+        };
+        $card->response = $real_amount;
         $card->save();
 
-        // Nếu thành công → cộng tiền
-        if ($status === 'success' && is_numeric($real_amount) && $real_amount > 0) {
+        // Update user balance if successful
+        if ($status == '1' && is_numeric($real_amount) && $real_amount > 0) {
             $user = $card->user;
-            $user->balance += (int)$real_amount; // Cast to integer for balance
+            $user->balance += (int)$real_amount;
             $user->save();
 
-            // Lưu lịch sử giao dịch
             Transaction::create([
                 'user_id' => $user->id,
                 'transaction_type' => 'deposit',
@@ -111,7 +168,6 @@ class CardsController extends Controller
         return response('OK', 200);
     }
 
-    // Lịch sử nạp thẻ
     public function history()
     {
         $cards = Card::where('user_id', auth()->id())->latest()->paginate(10);
