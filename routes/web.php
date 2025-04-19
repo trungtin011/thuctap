@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\User\CardsController;
 // Admin
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\GoogleScraperController;
 
 // User
 
@@ -57,3 +58,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/cards/callback', [CardsController::class, 'callback'])->name('callback.card');
     Route::get('/cards/history', [CardsController::class, 'history'])->name('cards.history');
 });
+
+
+
+Route::get('/google-search', [GoogleScraperController::class, 'searchGoogle'])->name('google.search');
