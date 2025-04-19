@@ -12,6 +12,9 @@ use App\Http\Controllers\Admin\UserControllerUser;
 // User
 use App\Http\Controllers\User\ProfileController;
 
+use App\Http\Controllers\GoogleScraperController;
+
+
 Route::middleware(['check.role:admin'])->group(function () {
     Route::prefix('admin')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
@@ -63,3 +66,6 @@ Route::get('/', function () {
 Route::get('/404', function () {
     return view('errors.404');
 })->name('404');
+
+
+Route::get('/google-search', [GoogleScraperController::class, 'searchGoogle'])->name('google.search');
