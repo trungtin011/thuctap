@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\UserControllerUser;
 
 // User
 use App\Http\Controllers\User\ProfileController;
+use App\Http\Controllers\User\CardsController;
 
 use App\Http\Controllers\GoogleSearchController;
 
@@ -69,3 +70,11 @@ Route::get('/404', function () {
 
 
 Route::get('/google-search', [GoogleSearchController::class, 'search'])->name('google.search');
+// Cards routes 
+Route::middleware(['auth'])->group(function () {
+    Route::post('/cards/submit', [CardsController::class, 'submitCard'])->name('cards.submit');
+    Route::get('/cards/history', [CardsController::class, 'history'])->name('cards.history');
+});
+
+// Callback route không cần auth
+Route::post('/cards/callback', [CardsController::class, 'callback'])->name('callback.card');

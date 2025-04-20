@@ -57,6 +57,11 @@
                                 <i class="fas fa-user mr-2"></i>
                                 Hồ sơ
                             </a>
+                            <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                href="{{ route('cards.history') }}">
+                                <i class="fas fa-history mr-2"></i>
+                                Lịch sử nạp thẻ
+                            </a>
                         @endif
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf
@@ -100,7 +105,8 @@
                         <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200" href="#">Option 3</a>
                     </div>
                 </div>
-                <a class="text-gray-700 hover:text-gray-900 px-2 py-2 sm:py-0" href="{{ route('google.search') }}">TÌM KIẾM</a>
+                <a class="text-gray-700 hover:text-gray-900 px-2 py-2 sm:py-0" href="{{ route('google.search') }}">TÌM
+                    KIẾM</a>
             </div>
         </nav>
     </header>
