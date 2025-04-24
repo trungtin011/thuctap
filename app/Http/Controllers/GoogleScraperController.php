@@ -14,7 +14,7 @@ class GoogleScraperController extends Controller
         $keyword = $request->input('keyword', ''); // Không có từ khóa mặc định
         
         if (!$keyword) {
-            return view('User.search.index', [
+            return view('user.search.index', [
                 'keyword' => $keyword,
                 'vnexpress' => []
             ]);
@@ -64,12 +64,12 @@ class GoogleScraperController extends Controller
                 }
             });
     
-            return view('User.search.index', [
+            return view('user.search.index', [
                 'keyword' => $keyword,
                 'vnexpress' => $results
             ]);
         } catch (\Exception $e) {
-            return view('User.search.index', [
+            return view('user.search.index', [
                 'keyword' => $keyword,
                 'vnexpress' => [[
                     'title' => 'Lỗi khi tìm kiếm',
