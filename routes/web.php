@@ -30,12 +30,11 @@ Route::middleware(['check.role:admin'])->group(function () {
 
         Route::post('/users/{id}/add-balance', [UserControllerUser::class, 'addBalance'])->name('admin.users.addBalance');
         Route::get('/users/{id}/toggle-status', [UserControllerUser::class, 'toggleStatus'])->name('admin.users.toggleStatus');
-
     });
     Route::prefix('admin')->group(function () {
         // Quản lý cards
         Route::get('cards', [CardController::class, 'index'])->name('admin.cards.index');
-        Route::patch('cards/{id}/status', [CardController::class, 'updateStatus'])->name('admin.updateCardStatus'); 
+        Route::patch('cards/{id}/status', [CardController::class, 'updateStatus'])->name('admin.updateCardStatus');
     });
 });
 
@@ -80,8 +79,6 @@ Route::get('/google-search', [GoogleScraperController::class, 'searchGoogle'])->
 // Cards routes 
 Route::middleware(['auth'])->group(function () {
     Route::post('/cards/submit', [CardsController::class, 'submitCard'])->name('cards.submit');
+    Route::post('/cards/callback', [CardsController::class, 'callback'])->name('callback.card');
     Route::get('/cards/history', [CardsController::class, 'history'])->name('cards.history');
 });
-
-// Callback route không cần auth
-Route::post('/cards/callback', [CardsController::class, 'callback'])->name('callback.card');

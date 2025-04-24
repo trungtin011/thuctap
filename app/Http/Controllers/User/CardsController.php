@@ -4,13 +4,12 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Card;
 use App\Models\Transaction;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Client\RequestException;
 
 class CardsController extends Controller
 {
@@ -22,18 +21,9 @@ class CardsController extends Controller
             'amount' => 'required|integer|in:10000,20000,30000,50000,100000,200000,300000,500000,1000000',
             'card_serial' => 'required|string|min:10|max:20|regex:/^[0-9]+$/', // Numbers only
             'card_code' => 'required|string|min:10|max:20|regex:/^[0-9]+$/', // Numbers only
-        ], [
-            'telco.required' => 'Vui lòng chọn nhà mạng.',
-            'amount.required' => 'Vui lòng chọn mệnh giá.',
-            'amount.integer' => 'Mệnh giá phải là số nguyên.',
-            'amount.in' => 'Mệnh giá không hợp lệ.',
-            'card_serial.required' => 'Vui lòng nhập số serial.',
-            'card_serial.regex' => 'Số serial chỉ được chứa số.',
-            'card_code.required' => 'Vui lòng nhập mã thẻ.',
-            'card_code.regex' => 'Mã thẻ chỉ được chứa số.',
         ]);
 
-        $user = Auth::user();
+        $user = auth()->user();
 
         // Map telco values to API expected format
         $telcoMap = [
@@ -45,7 +35,7 @@ class CardsController extends Controller
         // Prepare API request data
         $requestData = [
             'telco' => $telcoMap[$request->telco],
-            'amount' => (int) $request->amount, // Ensure amount is integer
+            'amount' => $request->amount,
             'serial' => $request->card_serial,
             'code' => $request->card_code,
             'request_id' => uniqid($user->id . '_', true),
@@ -62,7 +52,7 @@ class CardsController extends Controller
             $response = Http::timeout(30)
                 ->withHeaders([
                     'Accept' => 'application/json',
-                    'User-Agent' => 'Laravel/12.x',
+                    'User-Agent' => 'Laravel/10.x',
                 ])
                 ->get('https://thesieure.com/chargingws/v2', [
                     'sign' => $sign,
@@ -84,26 +74,14 @@ class CardsController extends Controller
                 'sign' => $sign,
             ]);
 
-            // Map API error messages to user-friendly messages
-            $errorMessages = [
-                'lang.invalid_card_code' => 'Mã thẻ không hợp lệ, vui lòng kiểm tra lại.',
-                'lang.invalid_card_serial' => 'Số serial không hợp lệ, vui lòng kiểm tra lại.',
-                'lang.card_used' => 'Thẻ đã được sử dụng trước đó.',
-                'lang.card_expired' => 'Thẻ đã hết hạn.',
-                'lang.invalid_amount' => 'Mệnh giá không đúng, vui lòng chọn lại.',
-                'lang.card_not_found' => 'Không tìm thấy thông tin thẻ, vui lòng thử lại.',
-                'lang.system_error' => 'Lỗi hệ thống, vui lòng thử lại sau.',
-            ];
-
             // Handle response
             if ($response->failed()) {
                 $errorMessage = $json['message'] ?? 'Lỗi từ API: ' . $response->status();
-                $userFriendlyMessage = $errorMessages[$errorMessage] ?? 'Gửi thẻ thất bại: ' . $errorMessage;
                 Log::error('API Request Failed:', [
                     'response' => $json,
                     'status' => $response->status(),
                 ]);
-                return back()->withErrors(['api' => $userFriendlyMessage]);
+                return back()->with('error', 'Gửi thẻ thất bại: ' . $errorMessage);
             }
 
             // Check API status
@@ -118,20 +96,18 @@ class CardsController extends Controller
                     'status' => 'pending',
                     'request_id' => $requestData['request_id'],
                 ]);
-                session()->flash('success', 'Gửi thẻ thành công, chờ xử lý...');
-                return back();
+                return back()->with('success', 'Gửi thẻ thành công, chờ xử lý...');
             } else {
                 $errorMessage = $json['message'] ?? 'Lỗi không xác định từ API';
-                $userFriendlyMessage = $errorMessages[$errorMessage] ?? 'Gửi thẻ thất bại: ' . $errorMessage;
                 Log::error('API Status Error:', ['response' => $json]);
-                return back()->withErrors(['api' => $userFriendlyMessage]);
+                return back()->with('error', 'Gửi thẻ thất bại: ' . $errorMessage);
             }
         } catch (RequestException $e) {
             Log::error('API Request Exception:', ['error' => $e->getMessage()]);
             if (strpos($e->getMessage(), 'Could not resolve host') !== false) {
-                return back()->withErrors(['api' => 'Không thể kết nối đến API: Máy chủ API không khả dụng hoặc địa chỉ sai.']);
+                return back()->with('error', 'Không thể kết nối đến API: Máy chủ API không khả dụng hoặc địa chỉ sai.');
             }
-            return back()->withErrors(['api' => 'Không thể kết nối đến API: ' . $e->getMessage()]);
+            return back()->with('error', 'Không thể kết nối đến API: ' . $e->getMessage());
         }
     }
 
@@ -148,11 +124,11 @@ class CardsController extends Controller
             return response('Invalid signature', 403);
         }
 
-        $serial = $request->serial; // 10010758543665
-        $code = $request->code; // 117969500944577
-        $status = $request->status; // 1 (success), 2 (wrong value), 3 (wrong card), 99 (pending)
-        $real_amount = $request->amount; // Số tiền thực nhận (sau khi trừ phí)
-        $request_id = $request->request_id; // ID giao dịch
+        $serial = $request->serial;
+        $code = $request->code;
+        $status = $request->status; // 1: success, 2: wrong value, 3: wrong card, 99: pending
+        $real_amount = $request->amount;
+        $request_id = $request->request_id;
 
         $card = Card::where('card_serial', $serial)
             ->where('card_code', $code)
@@ -164,19 +140,20 @@ class CardsController extends Controller
             return response('Card not found', 404);
         }
 
-        // Cập nhật trạng thái giao dịch
+        // Map API status to internal status
         $card->status = match ($status) {
             '1' => 'success',
             '2', '3' => 'failed',
             '99' => 'pending',
             default => 'failed',
         };
-        $card->response = $real_amount; // Lưu số tiền thực nhận
+        $card->response = $real_amount;
         $card->save();
 
+        // Update user balance if successful
         if ($status == '1' && is_numeric($real_amount) && $real_amount > 0) {
             $user = $card->user;
-            $user->balance += (int)$real_amount; // Cộng số tiền thực nhận vào số dư
+            $user->balance += (int)$real_amount;
             $user->save();
 
             Transaction::create([
@@ -193,7 +170,7 @@ class CardsController extends Controller
 
     public function history()
     {
-        $cards = Card::where('user_id', Auth::user()->id)->latest()->paginate(10);
+        $cards = Card::where('user_id', auth()->id())->latest()->paginate(10);
         return view('user.cards.history', compact('cards'));
     }
 }
