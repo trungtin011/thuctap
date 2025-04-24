@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <!-- Icon 365 -->
+    <link rel="shortcut icon" href="{{ asset('logo/Logo.png') }}" type="image/x-icon">
+    <title>365Pay</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
@@ -28,8 +30,10 @@
                     <!-- Hiển thị số dư quỹ trên desktop -->
                     <div class="hidden lg:flex items-center space-x-2">
                         <i class="fas fa-wallet"></i>
-                        <span>Số dư quỹ:
-                            <strong>{{ Auth::guard('web')->check() ? Auth::guard('web')->user()->balance : Auth::guard('admin')->user()->balance }}VNĐ</strong></span>
+                        <span>
+                            <strong>Số dư:
+                                <span
+                                    class="text-red-700">{{ Auth::guard('web')->check() ? Auth::guard('web')->user()->balance : Auth::guard('admin')->user()->balance }}<sup>đ</sup></span></strong></span>
                     </div>
                     <!-- Nút hiển thị tên người dùng với dropdown -->
                     <button class="bg-red-700 text-white px-3 py-2 rounded flex items-center text-sm focus:outline-none"
@@ -48,8 +52,9 @@
                         <!-- Số dư quỹ trong dropdown trên mobile -->
                         <div class="lg:hidden px-4 py-2 text-sm text-gray-700">
                             <i class="fas fa-wallet mr-2"></i>
-                            Số dư quỹ:
-                            <strong>{{ Auth::guard('web')->check() ? Auth::guard('web')->user()->balance : Auth::guard('admin')->user()->balance }}VNĐ</strong>
+                            <strong>Số dư:
+                                <span
+                                    class="text-red-700">{{ Auth::guard('web')->check() ? Auth::guard('web')->user()->balance : Auth::guard('admin')->user()->balance }}<sup>đ</sup></span></strong></span>
                         </div>
                         @if (Auth::guard('web')->check())
                             <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -61,6 +66,12 @@
                                 href="{{ route('cards.history') }}">
                                 <i class="fas fa-history mr-2"></i>
                                 Lịch sử nạp thẻ
+                            </a>
+                        @elseif (Auth::guard('admin')->check())
+                            <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                href="{{ route('admin.dashboard') }}">
+                                <i class="fas fa-tachometer-alt mr-2"></i>
+                                Quản lý
                             </a>
                         @endif
                         <form action="{{ route('logout') }}" method="POST">

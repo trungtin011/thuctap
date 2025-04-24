@@ -8,13 +8,13 @@ use App\Http\Controllers\Auth\LoginController;
 // Admin
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UserControllerUser;
+use App\Http\Controllers\Admin\CardController;
 
 // User
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\CardsController;
 
-use App\Http\Controllers\GoogleSearchController;
-
+use App\Http\Controllers\GoogleScraperController;
 
 Route::middleware(['check.role:admin'])->group(function () {
     Route::prefix('admin')->group(function () {
@@ -30,6 +30,12 @@ Route::middleware(['check.role:admin'])->group(function () {
 
         Route::post('/users/{id}/add-balance', [UserControllerUser::class, 'addBalance'])->name('admin.users.addBalance');
         Route::get('/users/{id}/toggle-status', [UserControllerUser::class, 'toggleStatus'])->name('admin.users.toggleStatus');
+
+    });
+    Route::prefix('admin')->group(function () {
+        // Quản lý cards
+        Route::get('cards', [CardController::class, 'index'])->name('admin.cards.index');
+        Route::patch('cards/{id}/status', [CardController::class, 'updateStatus'])->name('admin.updateCardStatus'); 
     });
 });
 
@@ -41,6 +47,7 @@ Route::middleware(['check.role:superadmin'])->group(function () {
 
 Route::prefix('user')->group(function () {
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+    Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 });
 
 // Routes đăng ký cho người dùng thông thường
@@ -68,8 +75,8 @@ Route::get('/404', function () {
     return view('errors.404');
 })->name('404');
 
+Route::get('/google-search', [GoogleScraperController::class, 'searchGoogle'])->name('google.search');
 
-Route::get('/google-search', [GoogleSearchController::class, 'search'])->name('google.search');
 // Cards routes 
 Route::middleware(['auth'])->group(function () {
     Route::post('/cards/submit', [CardsController::class, 'submitCard'])->name('cards.submit');

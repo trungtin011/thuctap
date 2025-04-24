@@ -16,7 +16,7 @@
         <p class="uppercase text-xs text-gray-600 mb-4 tracking-wider">homes</p>
 
         <!-- link -->
-        <a href="./index.html"
+        <a href="{{ route('admin.dashboard') }}"
             class="mb-3 capitalize font-medium text-sm hover:text-teal-600 transition ease-in-out duration-500">
             <i class="fad fa-chart-pie text-xs mr-2"></i>
             Tổng quan phân tích
@@ -30,5 +30,19 @@
             <i class="fad fa-user text-xs mr-2"></i>
             Người dùng
         </a>
+
+        <!-- link -->
+        <a href="{{ route('admin.cards.index') }}"
+        class="mb-3 capitalize font-medium text-sm hover:text-teal-600 transition ease-in-out duration-500">
+            <i class="fad fa-credit-card text-xs mr-2"></i>
+            Thanh toán
+        </a>
+
+        {{-- <!-- link -->
+        <a href="#"
+            class="mb-3 capitalize font-medium text-sm hover:text-teal-600 transition ease-in-out duration-500">
+            <i class="fad fa-newspaper text-xs mr-2"></i>
+            Bài viết
+        </a> --}}
     </div>
 </div>
