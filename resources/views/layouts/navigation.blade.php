@@ -102,7 +102,7 @@
         <nav id="navMenu" class="bg-gray-100 sm:block hidden">
             <div class="container mx-auto flex flex-col sm:flex-row sm:space-x-4 py-2" style="max-width: 1150px">
                 <a class="text-gray-700 hover:text-gray-900 px-2 py-2 sm:py-0" href="{{ route('home') }}">Nạp thẻ</a>
-                <div class="relative">
+                {{-- <div class="relative">
                     <button class="text-gray-700 hover:text-gray-900 px-2 py-2 sm:py-0 flex items-center"
                         onclick="toggleServiceDropdown()">
                         Dịch vụ
@@ -115,7 +115,7 @@
                         <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200" href="#">Option 2</a>
                         <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200" href="#">Option 3</a>
                     </div>
-                </div>
+                </div> --}}
                 <a class="text-gray-700 hover:text-gray-900 px-2 py-2 sm:py-0" href="{{ route('google.search') }}">Tin tức</a>
             </div>
         </nav>
