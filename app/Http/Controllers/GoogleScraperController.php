@@ -20,7 +20,8 @@ class GoogleScraperController extends Controller
         }
 
         $query = urlencode("site:vnexpress.net $keyword");
-        $url = "https://html.duckduckgo.com/html/?q={$query}";
+        $url = "https://html.duckduckgo.com/html/?q={$query}&t=" . time();
+
     
         $client = new Client([
             'headers' => [
@@ -34,6 +35,8 @@ class GoogleScraperController extends Controller
             $html = $response->getBody()->getContents();
     
             $crawler = new Crawler($html);
+            file_put_contents(storage_path('app/debug.html'), $html);
+
             $results = [];
     
             $crawler->filter('div.result__body')->each(function ($node) use (&$results) {

@@ -9,7 +9,7 @@ use App\Http\Controllers\User\CardsController;
 // Admin
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\GoogleScraperController;
-
+use App\Http\Controllers\SerpApiController;
 // User
 
 
@@ -61,4 +61,6 @@ Route::middleware(['auth'])->group(function () {
 
 
 
-Route::get('/google-search', [GoogleScraperController::class, 'searchGoogle'])->name('google.search');
+
+
+Route::get('/search', [SerpApiController::class, 'search']);
