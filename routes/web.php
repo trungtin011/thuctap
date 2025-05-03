@@ -15,6 +15,7 @@ use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\CardsController;
 
 use App\Http\Controllers\GoogleScraperController;
+use App\Http\Controllers\SerpApiController;
 
 Route::middleware(['check.role:admin'])->group(function () {
     Route::prefix('admin')->group(function () {
@@ -82,3 +83,5 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/cards/callback', [CardsController::class, 'callback'])->name('callback.card');
     Route::get('/cards/history', [CardsController::class, 'history'])->name('cards.history');
 });
+
+Route::get('/search', [SerpApiController::class, 'search']);
