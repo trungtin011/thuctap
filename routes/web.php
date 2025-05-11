@@ -14,7 +14,7 @@ use App\Http\Controllers\Admin\CardController;
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\CardsController;
 
-use App\Http\Controllers\GoogleScraperController;
+// use App\Http\Controllers\GoogleScraperController;
 use App\Http\Controllers\SerpApiController;
 
 Route::middleware(['check.role:admin'])->group(function () {
@@ -75,7 +75,7 @@ Route::get('/404', function () {
     return view('errors.404');
 })->name('404');
 
-Route::get('/google-search', [GoogleScraperController::class, 'searchGoogle'])->name('google.search');
+// Route::get('/google-search', [SerpApiController::class, 'searchGoogle'])->name('google.search');
 
 // Cards routes 
 Route::middleware(['auth'])->group(function () {
