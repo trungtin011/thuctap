@@ -15,35 +15,37 @@
         <i class="fas fa-arrow-left"></i>
     </a>
 
-
     <div class="w-full mx-auto px-4 py-8 flex flex-col items-center">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-        <h1 class="text-2xl sm:text-3xl font-bold mb-6 text-center w-full">Công cụ tìm kiếm</h1>
+        <h1 class="text-2xl sm:text-3xl font-bold mb-4 text-center w-full">Công cụ tìm kiếm</h1>
 
-        <form id="search-form" class="mb-6 flex gap-2 w-full justify-center" action="/search" method="get">
-            <input type="text" name="q" value="{{ $query ?? '' }}" placeholder="Nhập từ khóa..."
-                class="flex-grow border p-2 shadow">
+        <form id="search-form" class="mb-6 gap-2 w-full justify-center" action="{{ route('search.results') }}"
+            method="get">
+            <div class="w-full flex mb-3">
+                <input type="text" name="q" value="{{ $query ?? '' }}" placeholder="Nhập từ khóa..."
+                    class="flex-grow border p-2 shadow">
 
-            <select name="platform" class="border p-2 shadow">
-                <option value="">Tất cả nền tảng</option>
-                <option value="Facebook" {{ request('platform') == 'Facebook' ? 'selected' : '' }}>Facebook</option>
-                <option value="YouTube" {{ request('platform') == 'YouTube' ? 'selected' : '' }}>YouTube</option>
-                <option value="Shopee" {{ request('platform') == 'Shopee' ? 'selected' : '' }}>Shopee</option>
-                <option value="Instagram" {{ request('platform') == 'Instagram' ? 'selected' : '' }}>Instagram</option>
-                <option value="X" {{ request('platform') == 'X' ? 'selected' : '' }}>X</option>
-                <option value="Tiki" {{ request('platform') == 'Tiki' ? 'selected' : '' }}>Tiki</option>
-                <!-- Thêm các nền tảng khác tùy ý -->
-            </select>
+                <button type="submit" class="bg-gray-600 text-white px-4 py-2">Tìm</button>
+            </div>
 
-            <button type="submit" class="bg-gray-600 text-white px-4 py-2">Tìm</button>
+            <div class="flex gap-2 items-center">
+                <select name="sentiment" id="sentiment" class="border p-2 shadow">
+                    <option value="">Tất cả cảm xúc</option>
+                    <option value="Tốt" {{ request('sentiment') === 'Tốt' ? 'selected' : '' }}>Tốt</option>
+                    <option value="Xấu" {{ request('sentiment') === 'Xấu' ? 'selected' : '' }}>Xấu</option>
+                    <option value="Trung bình" {{ request('sentiment') === 'Trung bình' ? 'selected' : '' }}>Trung bình
+                    </option>
+                </select>
+            </div>
         </form>
 
 
-        @if (isset($results) && count($results) > 0)
+        @if (!empty($results) && is_iterable($results) && count($results) > 0)
             <div id="results" class="space-y-4 w-full">
                 @foreach ($results as $result)
-                    <div class="p-4 border rounded-md shadow bg-white text-sm sm:text-base">
+                    <div data-sentiment="{{ $result['sentiment'] }}"
+                        class="search-result p-4 border rounded-none shadow bg-white">
                         <div class="flex items-center mb-2">
                             <i class="{{ $result['platform_icon'] }} text-lg mr-2 {{ $result['platform_color'] }}"
                                 aria-label="Nền tảng {{ $result['platform'] }}"></i>
@@ -53,20 +55,20 @@
                             class="text-lg text-blue-700 font-semibold hover:underline">{{ $result['title'] }}</a>
 
                         <div class="mt-2 mb-2">
-                            @if (isset($result['thumbnail']) && $result['thumbnail'])
+                            @if (!empty($result['thumbnail']))
                                 <img src="{{ $result['thumbnail'] }}" alt="{{ $result['title'] }}"
-                                    class="w-full h-auto object-contain sm:max-w-[150px]"
+                                    class="w-full sm:max-w-[200px] h-auto object-contain"
                                     onerror="this.src='{{ asset('images/placeholder.png') }}'">
                             @else
                                 <img src="{{ asset('images/placeholder.png') }}" alt="No image"
-                                    class="w-full h-auto object-contain sm:max-w-[150px]">
+                                    class="w-full sm:max-w-[200px] h-auto object-contain">
                             @endif
                         </div>
 
                         <p class="text-gray-600 mt-1">{{ $result['snippet'] ?? '' }}</p>
 
                         @if (isset($result['sentiment']))
-                            <p class="text-sm mt-2">
+                            <p class="rating-text text-sm mt-2 font-semibold">
                                 Đánh giá:
                                 @if ($result['sentiment'] === 'Tốt')
                                     <span class="text-green-500 font-semibold">{{ $result['sentiment'] }}</span>
@@ -85,10 +87,48 @@
                     {{ $paginator->appends(['q' => $query])->links() }}
                 </div>
             </div>
-        @elseif(isset($results))
-            <p>Không tìm thấy kết quả nào.</p>
+        @elseif(empty($results) && !empty($query))
+            <p>Không tìm thấy kết quả phù hợp với từ khóa: "{{ $query }}".</p>
         @endif
+    </div>
+    <!-- Thêm khối này vào trước khi kết quả hiển thị -->
+    <div id="loading-skeleton" class="w-full mx-auto {{ isset($results) ? 'hidden' : '' }}">
+        @for ($i = 0; $i < 3; $i++)
+            <div class="p-4 border rounded shadow bg-white animate-pulse">
+                <div class="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
+                <div class="h-6 bg-gray-400 rounded w-2/3 mb-2"></div>
+                <div class="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                <div class="h-40 bg-gray-100 rounded"></div>
+            </div>
+        @endfor
     </div>
 </body>
 
 </html>
+<script>
+    const form = document.getElementById('search-form');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingSkeleton = document.getElementById('loading-skeleton');
+    const results = document.getElementById('results');
+
+    form.addEventListener('submit', function() {
+        if (results) {
+            results.classList.add('hidden'); // Ẩn kết quả cũ
+        }
+        loadingSkeleton.classList.remove('hidden'); // Hiện khung skeleton
+        loadingOverlay?.classList.remove('hidden'); // Hiện overlay
+    });
+
+    // document.getElementById('sentiment').addEventListener('change', function() {
+    //     const form = document.getElementById('search-form');
+    //     form.submit(); // Tự động submit form khi người dùng chọn cảm xúc
+    // });
+
+    document.getElementById('sentiment').addEventListener('change', function() {
+        document.getElementById('search-form').submit();
+    });
+
+    document.getElementById('platform').addEventListener('change', function() {
+        document.getElementById('search-form').submit();
+    });
+</script>

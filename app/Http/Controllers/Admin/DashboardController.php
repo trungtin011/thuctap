@@ -11,7 +11,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $admin = Admin::where('username', auth('admin')->user()->username)->first();
+        $admin = Admin::first();
         return view('admin.index' , compact('admin'));
     }
 }

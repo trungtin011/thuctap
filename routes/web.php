@@ -10,6 +10,9 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UserControllerUser;
 use App\Http\Controllers\Admin\CardController;
 
+use App\Http\Controllers\Admin\SearchAdminController;
+
+
 // User
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\CardsController;
@@ -20,6 +23,14 @@ use App\Http\Controllers\SerpApiController;
 Route::middleware(['check.role:admin'])->group(function () {
     Route::prefix('admin')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+    });
+
+    // Quản lý tìm kiếm
+    Route::prefix('admin')->group(function () {
+        Route::get('/search/history', [SearchAdminController::class, 'index'])->name('admin.search.history');
+        Route::get('/search/statistics', [SearchAdminController::class, 'statistics'])->name('admin.search.statistics');
+        Route::get('/search/evaluate', [SearchAdminController::class, 'evaluateForm'])->name('admin.search.evaluate.form');
+        Route::post('/search/evaluate', [SearchAdminController::class, 'evaluateManual'])->name('admin.search.evaluate');
     });
 
     // Quản lý user
@@ -36,12 +47,6 @@ Route::middleware(['check.role:admin'])->group(function () {
         // Quản lý cards
         Route::get('cards', [CardController::class, 'index'])->name('admin.cards.index');
         Route::patch('cards/{id}/status', [CardController::class, 'updateStatus'])->name('admin.updateCardStatus');
-    });
-});
-
-Route::middleware(['check.role:superadmin'])->group(function () {
-    Route::prefix('superadmin')->group(function () {
-        Route::get('/superadmin/dashboard', [DashboardController::class, 'index'])->name('superadmin.dashboard');
     });
 });
 
@@ -84,4 +89,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/cards/history', [CardsController::class, 'history'])->name('cards.history');
 });
 
-Route::get('/search', [SerpApiController::class, 'search']);
+// Route hiển thị form tìm kiếm
+Route::get('/search', [SerpApiController::class, 'showSearchForm'])->name('search.form');
+
+// Route xử lý tìm kiếm
+Route::get('/search/results', [SerpApiController::class, 'search'])->name('search.results');

@@ -31,10 +31,10 @@
                 <form action="{{ route('user.login') }}" method="POST">
                     @csrf
                     <div class="mb-4 flex items-center gap-5">
-                        <label class="w-1/2 block text-gray-700 font-bold mb-2" for="email">Tên đăng nhập:</label>
+                        <label class="w-1/2 block text-gray-700 font-bold mb-2" for="email">Email:</label>
                         <input
                             class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            name="email" id="email" type="text" placeholder="Email hoặc số điện thoại">
+                            name="email" id="email" type="text" placeholder="Email">
                     </div>
                     <div class="mb-4 flex items-center gap-5">
                         <label class="w-1/2 block text-gray-700 font-bold mb-2" for="password">Mật khẩu</label>

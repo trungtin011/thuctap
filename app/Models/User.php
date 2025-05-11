@@ -2,34 +2,24 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use Notifiable;
+    use HasFactory, Notifiable;
 
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'password_level2',
-        'pin',
-        'balance'
+        'name', 'email', 'password', 'role'
     ];
 
     protected $hidden = [
-        'password',
-        'password_level2',
-        'pin',
+        'password', 'remember_token',
     ];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-    ];
-
-    protected $attributes = [
-        'pin' => '', // Mặc định là chuỗi rỗng
     ];
 }

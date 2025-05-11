@@ -39,14 +39,12 @@
                             name="password" id="password" class="w-full px-3 py-2 border border-gray-300 rounded"
                             placeholder="Mật khẩu" value="{{ old('password') }}">
                     </div>
-                    <div class="mb-4 flex items-center gap-4">
-                        <label for="password2" class="block text-gray-700 w-1/2">Mật khẩu cấp 2</label>
-                        <div class="flex flex-col w-full">
-                            <input type="password" name="password_level2" id="password2"
-                                class="w-full px-3 py-2 border border-gray-300 rounded" placeholder="Mật khẩu cấp 2" value="{{ old('password_level2') }}">
-                            <p class="text-red-500 text-sm mt-1">Mật khẩu cấp 2 không được giống với mật khẩu đăng nhập.</p>
-                        </div>
+                    <div class="mb-4 flex items-center gap-5">
+                        <label for="password_confirmation" class="block text-gray-700 w-1/2">Nhập lại mật khẩu</label>
+                        <input type="password" name="password_confirmation" id="password_confirmation"
+                            class="w-full px-3 py-2 border border-gray-300 rounded" placeholder="Nhập lại mật khẩu">
                     </div>
+                    
                     <div class="mb-4 flex items-center gap-5">
                         <div class="g-recaptcha" data-sitekey="your_site_key"></div>
                     </div>
