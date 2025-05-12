@@ -36,27 +36,48 @@ class SearchService
                 Log::warning('Nội dung rỗng, sử dụng snippet cho URL: ' . $url);
             }
 
-            $geminiApiKey = env('GEMINI_API_KEY');
+            // Gọi Gemini API
+            $geminiApiKey = env('GEMINI_API_KEY', 'AIzaSyDhb0kguqfFXdsknNviCU7dLI6NeCQS8hs');
             $geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
-            $prompt = "Phân tích nội dung sau và đánh giá xem nội dung có tích cực (Tốt), tiêu cực (Xấu), hay trung bình (Trung bình):\n\n" . $content .
-                "\n\nTrả về một câu duy nhất với kết quả: 'Tốt', 'Xấu', hoặc 'Trung bình'.";
+            $prompt = "Phân tích nội dung sau và đánh giá xem nội dung có tích cực (Tốt), tiêu cực (Xấu), hay trung tính (Trung bình). \n\n" .
+                "- Nội dung được coi là 'Tốt' nếu: \n" .
+                "  - Cung cấp thông tin hữu ích, đáng tin cậy về sản phẩm, dịch vụ, hoặc công ty.\n" .
+                "  - Chứa từ ngữ tích cực như 'chất lượng cao', 'uy tín', 'đáng tin cậy', hoặc đánh giá tốt.\n" .
+                "  - Quảng bá sản phẩm/dịch vụ một cách chân thực, không có dấu hiệu lừa đảo.\n\n" .
+                "- Nội dung được coi là 'Xấu' nếu: \n" .
+                "  - Chứa thông tin sai lệch, lừa đảo, hoặc gây hiểu lầm.\n" .
+                "  - Có từ ngữ tiêu cực như 'kém chất lượng', 'lừa đảo', 'phàn nàn', hoặc đánh giá xấu.\n" .
+                "  - Nội dung kích động, xúc phạm, hoặc không phù hợp.\n\n" .
+                "- Nội dung được coi là 'Trung bình' nếu: \n" .
+                "  - Chỉ cung cấp thông tin thực tế, không có cảm xúc tích cực hoặc tiêu cực rõ ràng (ví dụ: thông tin lịch sử, số liệu, hoặc mô tả kỹ thuật).\n" .
+                "  - Không đủ thông tin để đánh giá là Tốt hoặc Xấu.\n\n" .
+                "Trả về một câu ngắn gọn chỉ với kết quả: 'Tốt', 'Xấu', hoặc 'Trung bình'. Nội dung: \n\n" . $content;
 
-            $geminiResponse = Http::withHeaders([
+            // Gửi yêu cầu đến Gemini API
+            $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
             ])->post($geminiEndpoint . '?key=' . $geminiApiKey, [
-                'contents' => [['parts' => [['text' => $prompt]]]]
+                'contents' => [
+                    [
+                        'parts' => [
+                            ['text' => $prompt]
+                        ]
+                    ]
+                ]
             ]);
 
-            if ($geminiResponse->ok()) {
-                return $geminiResponse->json()['candidates'][0]['content']['parts'][0]['text'] ?? 'Không xác định';
+            if ($response->ok()) {
+                $result = $response->json()['candidates'][0]['content']['parts'][0]['text'] ?? 'Không xác định';
+                Log::info('Kết quả từ Gemini cho URL: ' . $url, ['result' => $result]);
+                return $result;
             } else {
-                Log::error('Lỗi khi gọi Gemini API', ['status' => $geminiResponse->status()]);
-                return 'Lỗi khi gọi Gemini API';
+                Log::error('Lỗi khi gọi Gemini API cho URL: ' . $url, ['status' => $response->status()]);
+                return 'Lỗi khi gọi Gemini API: ' . $response->status();
             }
         } catch (\Exception $e) {
-            Log::error('Lỗi khi xử lý evaluateContent', ['error' => $e->getMessage()]);
-            return 'Lỗi xử lý nội dung';
+            Log::error('Lỗi xử lý URL: ' . $url, ['error' => $e->getMessage()]);
+            return 'Lỗi: ' . $e->getMessage();
         }
     }
 
@@ -72,16 +93,25 @@ class SearchService
 
         // Dùng cache trong 24 giờ
         return Cache::remember($cacheKey, now()->addHours(24), function () use ($text, $targetLang) {
-            $response = Http::get("https://translate.googleapis.com/translate_a/single", [
-                'client' => 'gtx',
-                'sl' => 'auto',
-                'tl' => $targetLang,
-                'dt' => 't',
+            $apiKey = env('GOOGLE_TRANSLATE_API_KEY');
+
+            if (!$apiKey) {
+                return $text; // Trả lại nguyên văn nếu không có API key
+            }
+
+            $response = Http::post("https://translation.googleapis.com/language/translate/v2", [
                 'q' => $text,
+                'target' => $targetLang,
+                'format' => 'text',
+                'key' => $apiKey
             ]);
 
-            $data = $response->json();
-            return $data[0][0][0] ?? $text;
+            if ($response->ok()) {
+                return $response->json()['data']['translations'][0]['translatedText'] ?? $text;
+            }
+
+            Log::error('Lỗi dịch văn bản: ' . $response->body());
+            return $text;
         });
     }
 }
