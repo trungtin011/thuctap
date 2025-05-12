@@ -8,9 +8,18 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use App\Services\SearchService;
 
 class SerpApiController extends Controller
 {
+
+    protected $searchService;
+
+    public function __construct(SearchService $searchService)
+    {
+        $this->searchService = $searchService;
+    }
+
     public function showSearchForm()
     {
         return view('User.search.index', [
@@ -20,10 +29,39 @@ class SerpApiController extends Controller
         ]);
     }
 
+    // Function to get icon based on domain name
+    protected function getIconForDomain($domain)
+    {
+        // Một số ánh xạ tên miền phổ biến với các icon và màu sắc tương ứng
+        $domainIconMap = [
+            'facebook.com' => ['icon' => 'fab fa-facebook', 'color' => 'text-blue-600'],
+            'google.com' => ['icon' => 'fab fa-google', 'color' => 'text-red-500'],
+            'twitter.com' => ['icon' => 'fab fa-twitter', 'color' => 'text-blue-400'],
+            'youtube.com' => ['icon' => 'fab fa-youtube', 'color' => 'text-red-600'],
+            'instagram.com' => ['icon' => 'fab fa-instagram', 'color' => 'text-pink-600'],
+            'linkedin.com' => ['icon' => 'fab fa-linkedin', 'color' => 'text-blue-700'],
+            'github.com' => ['icon' => 'fab fa-github', 'color' => 'text-gray-700'],
+            'amazon.com' => ['icon' => 'fab fa-amazon', 'color' => 'text-yellow-500'],
+            'wikipedia.org' => ['icon' => 'fab fa-wikipedia-w', 'color' => 'text-black'],
+            'tumblr.com' => ['icon' => 'fab fa-tumblr', 'color' => 'text-blue-500'],
+            'pinterest.com' => ['icon' => 'fab fa-pinterest', 'color' => 'text-red-600'],
+            'reddit.com' => ['icon' => 'fab fa-reddit-alien', 'color' => 'text-orange-600'],
+            // Thêm các ánh xạ khác nếu cần
+        ];
+
+        // Trả về icon và color tương ứng từ mảng ánh xạ
+        if (isset($domainIconMap[$domain])) {
+            return $domainIconMap[$domain]; // Trả về mảng với icon và color
+        }
+
+        return ['icon' => 'fas fa-globe', 'color' => 'text-gray-500']; // Nếu không có trong danh sách, trả về icon và color mặc định
+    }
+
     public function search(Request $request)
     {
         $query = $request->input('q', '');
         $page = $request->input('page', 1);
+        $lang = $request->input('lang', 'vi');
         $perPage = 5;
         $paginator = null;
 
@@ -33,7 +71,7 @@ class SerpApiController extends Controller
 
         // Dùng cache để lưu kết quả tìm kiếm 1 tiếng
         $results = Cache::remember($cacheKey, now()->addHours(1), function () use ($query) {
-            return $this->evaluateContent('https://www.google.com/search?q=' . urlencode($query), ''); // ← gọi Google API
+            return $this->searchService->evaluateContent('https://www.google.com/search?q=' . urlencode($query), ''); // ← gọi Google API
         });
 
         $apiKey = env('GOOGLE_API_KEY');
@@ -73,20 +111,40 @@ class SerpApiController extends Controller
                 $results = $responseData['items'] ?? [];
                 $totalResults = min((int)($responseData['searchInformation']['totalResults'] ?? 0), 100);
 
+                // Lấy danh sách nền tảng từ bảng platforms
+                $platforms = DB::table('platforms')->get()->keyBy('domain');
+
                 foreach ($results as &$result) {
                     $url = $result['link'] ?? '';
                     $domain = parse_url($url, PHP_URL_HOST);
                     $domain = $domain ? str_replace('www.', '', strtolower($domain)) : 'unknown';
 
-                    // Gán thông tin nền tảng nếu có
-                    if (isset($platforms[$domain])) {
-                        $result['platform'] = $platforms[$domain]['name'];
-                        $result['platform_icon'] = $platforms[$domain]['icon'];
-                        $result['platform_color'] = $platforms[$domain]['color'];
+                    $result['domain'] = $domain;
+
+                    $icon = $this->getIconForDomain($domain);
+
+                    if ($platforms->has($domain)) {
+                        $platform = $platforms->get($domain);
+                        $result['platform'] = $platform->name;
+                        $result['platform_icon'] = $platform->icon;
+                        $result['platform_color'] = $platform->color;
                     } else {
-                        $result['platform'] = ucfirst(str_replace(['.com', '.vn', '.org', '.net'], '', $domain));
-                        $result['platform_icon'] = 'fas fa-globe';
-                        $result['platform_color'] = 'text-gray-500';
+                        $newName = ucfirst(str_replace(['.com', '.vn', '.org', '.net'], '', $domain));
+
+                        DB::table('platforms')->updateOrInsert(
+                            ['domain' => $domain],
+                            [
+                                'name' => $newName,
+                                'icon' => $icon['icon'],
+                                'color' => $icon['color'],
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]
+                        );
+
+                        $result['platform'] = $newName;
+                        $result['platform_icon'] = $icon['icon'];
+                        $result['platform_color'] = $icon['color'];
                     }
 
                     // Thêm hình ảnh thu nhỏ
@@ -99,9 +157,15 @@ class SerpApiController extends Controller
                         ->value('sentiment');
 
                     // Gán giá trị cảm xúc
-                    $result['sentiment'] = $sentiment ?? $this->evaluateContent($result['link'], $result['snippet'] ?? '');
+                    $result['sentiment'] = $sentiment ?? $this->searchService->evaluateContent($result['link'], $result['snippet'] ?? '');
 
-                    // Cập nhật sentiment vào bảng search_logs
+                    // Dịch tiêu đề nếu cần
+                    $result['title'] = $this->searchService->translateText($result['title'], $lang);
+
+                    // Dịch mô tả (snippet) nếu có
+                    $result['snippet'] = $this->searchService->translateText($result['snippet'] ?? '', $lang);
+
+                    // Lưu hoặc cập nhật vào bảng search_logs
                     DB::table('search_logs')->updateOrInsert(
                         [
                             'query' => $query,
@@ -138,70 +202,12 @@ class SerpApiController extends Controller
     }
 
 
-
-    private function evaluateContent($url, $snippet)
-    {
-        try {
-            $response = Http::get($url);
-            if (!$response->ok()) {
-                Log::warning('Không thể truy cập URL: ' . $url);
-                return 'Không thể truy cập trang web';
-            }
-
-            $encoding = 'UTF-8';
-            $contentType = $response->header('Content-Type');
-            if ($contentType && preg_match('/charset=([\w-]+)/i', $contentType, $matches)) {
-                $encoding = strtoupper($matches[1]);
-            }
-
-            $content = $response->body();
-            $content = @mb_convert_encoding($content, 'UTF-8', 'auto');
-            $content = strip_tags($content);
-            $content = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $content);
-            $content = preg_replace('/[^\p{L}\p{N}\s]/u', '', $content);
-            $content = trim(mb_substr($content, 0, 1000));
-
-            if (empty($content)) {
-                $content = $snippet;
-                Log::warning('Nội dung rỗng, sử dụng snippet cho URL: ' . $url);
-            }
-
-            Log::info('Nội dung sau khi làm sạch cho URL: ' . $url, ['content' => $content]);
-
-            if (empty($content)) {
-                return 'Không có nội dung để đánh giá';
-            }
-
-            $geminiApiKey = env('GEMINI_API_KEY');
-            $geminiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-
-            $prompt = "Phân tích nội dung sau và đánh giá xem nội dung có tích cực (Tốt), tiêu cực (Xấu), hay trung bình (Trung bình):\n\n" . $content .
-                "\n\nTrả về một câu duy nhất với kết quả: 'Tốt', 'Xấu', hoặc 'Trung bình'.";
-
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-            ])->post($geminiEndpoint . '?key=' . $geminiApiKey, [
-                'contents' => [['parts' => [['text' => $prompt]]]]
-            ]);
-
-            if ($response->ok()) {
-                return $response->json()['candidates'][0]['content']['parts'][0]['text'] ?? 'Không xác định';
-            } else {
-                Log::error('Lỗi khi gọi Gemini API cho URL: ' . $url, ['status' => $response->status()]);
-                return 'Lỗi khi gọi Gemini API';
-            }
-        } catch (\Exception $e) {
-            Log::error('Lỗi xử lý nội dung URL: ' . $url, ['error' => $e->getMessage()]);
-            return 'Lỗi xử lý nội dung';
-        }
-    }
-
     public function evaluateUrl(Request $request)
     {
         $url = $request->input('url');
         $snippet = $request->input('snippet') ?? '';
 
-        $sentiment = $this->evaluateContent($url, $snippet);
+        $sentiment = $this->searchService->evaluateContent($url, $snippet);
 
         return response()->json(['sentiment' => $sentiment]);
     }

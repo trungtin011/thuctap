@@ -17,8 +17,8 @@ use App\Http\Controllers\Admin\SearchAdminController;
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\CardsController;
 
-// use App\Http\Controllers\GoogleScraperController;
 use App\Http\Controllers\SerpApiController;
+use App\Http\Controllers\AutocompleteController;
 
 Route::middleware(['check.role:admin'])->group(function () {
     Route::prefix('admin')->group(function () {
@@ -94,3 +94,5 @@ Route::get('/search', [SerpApiController::class, 'showSearchForm'])->name('searc
 
 // Route xử lý tìm kiếm
 Route::get('/search/results', [SerpApiController::class, 'search'])->name('search.results');
+
+Route::get('/autocomplete', [AutocompleteController::class, 'suggest']);
