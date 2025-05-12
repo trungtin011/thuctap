@@ -12,7 +12,6 @@ use App\Services\SearchService;
 
 class SerpApiController extends Controller
 {
-
     protected $searchService;
 
     public function __construct(SearchService $searchService)
@@ -25,14 +24,13 @@ class SerpApiController extends Controller
         return view('User.search.index', [
             'results' => [],
             'query' => '',
-            'paginator' => null
+            'paginator' => null,
+            'platform' => '',
         ]);
     }
 
-    // Function to get icon based on domain name
     protected function getIconForDomain($domain)
     {
-        // Một số ánh xạ tên miền phổ biến với các icon và màu sắc tương ứng
         $domainIconMap = [
             'facebook.com' => ['icon' => 'fab fa-facebook', 'color' => 'text-blue-600'],
             'google.com' => ['icon' => 'fab fa-google', 'color' => 'text-red-500'],
@@ -46,15 +44,9 @@ class SerpApiController extends Controller
             'tumblr.com' => ['icon' => 'fab fa-tumblr', 'color' => 'text-blue-500'],
             'pinterest.com' => ['icon' => 'fab fa-pinterest', 'color' => 'text-red-600'],
             'reddit.com' => ['icon' => 'fab fa-reddit-alien', 'color' => 'text-orange-600'],
-            // Thêm các ánh xạ khác nếu cần
         ];
 
-        // Trả về icon và color tương ứng từ mảng ánh xạ
-        if (isset($domainIconMap[$domain])) {
-            return $domainIconMap[$domain]; // Trả về mảng với icon và color
-        }
-
-        return ['icon' => 'fas fa-globe', 'color' => 'text-gray-500']; // Nếu không có trong danh sách, trả về icon và color mặc định
+        return $domainIconMap[$domain] ?? ['icon' => 'fas fa-globe', 'color' => 'text-gray-500'];
     }
 
     public function search(Request $request)
@@ -62,17 +54,14 @@ class SerpApiController extends Controller
         $query = $request->input('q', '');
         $page = $request->input('page', 1);
         $lang = $request->input('lang', 'vi');
+        $platform = $request->input('platform', '');
         $perPage = 5;
+        $sentimentFilter = $request->input('sentiment', '');
+        $timeFilter = $request->input('time', '');
+        $realTime = $request->input('real_time', false);
         $paginator = null;
 
-        $sentimentFilter = $request->input('sentiment', '');  // Lọc theo cảm xúc nếu có
-
-        $cacheKey = 'search_results_' . md5($query);
-
-        // Dùng cache để lưu kết quả tìm kiếm 1 tiếng
-        $results = Cache::remember($cacheKey, now()->addHours(1), function () use ($query) {
-            return $this->searchService->evaluateContent('https://www.google.com/search?q=' . urlencode($query), ''); // ← gọi Google API
-        });
+        $cacheKey = 'search_results_' . md5($query . $platform . $timeFilter);
 
         $apiKey = env('GOOGLE_API_KEY');
         $cx = env('GOOGLE_CX');
@@ -81,37 +70,36 @@ class SerpApiController extends Controller
             return redirect()->back()->with('error', 'Chưa cấu hình GOOGLE_API_KEY hoặc GOOGLE_CX trong .env');
         }
 
+        $results = [];
+        $totalResults = 0;
+
         if (!empty($query)) {
-            $start = ($page - 1) * $perPage + 1;
-            $cacheKey = 'search_' . md5($query . '_' . $page);
+            if ($platform) {
+                // Tìm kiếm trên mạng xã hội cụ thể
+                $results = $this->searchOnSocialMedia($query, $platform, $page, $perPage, $realTime);
+                $totalResults = count($results);
+            } else {
+                // Tìm kiếm mặc định qua Google API
+                $start = ($page - 1) * $perPage + 1;
 
-            // Lấy kết quả tìm kiếm từ Google API và cache
-            $responseData = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($apiKey, $cx, $query, $start, $perPage) {
-                $response = Http::get('https://www.googleapis.com/customsearch/v1', [
-                    'key' => $apiKey,
-                    'cx' => $cx,
-                    'q' => $query,
-                    'hl' => 'vi',
-                    'gl' => 'vn',
-                    'start' => $start,
-                    'num' => $perPage,
-                    'fields' => 'items(title,link,snippet,pagemap),searchInformation(totalResults)',
-                ]);
-
-                if ($response->failed()) {
-                    Log::error('Lỗi gọi Google Custom Search API: ' . $response->status() . ' - ' . $response->body());
-                    return null;
+                if ($realTime) {
+                    // Tìm kiếm thời gian thực, không dùng cache
+                    $responseData = $this->fetchGoogleSearch($apiKey, $cx, $query, $start, $perPage, $timeFilter);
+                } else {
+                    // Tìm kiếm có cache
+                    $responseData = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($apiKey, $cx, $query, $start, $perPage, $timeFilter) {
+                        return $this->fetchGoogleSearch($apiKey, $cx, $query, $start, $perPage, $timeFilter);
+                    });
                 }
 
-                return $response->json();
-            });
+                if (!is_null($responseData)) {
+                    $results = $responseData['items'] ?? [];
+                    $totalResults = min((int)($responseData['searchInformation']['totalResults'] ?? 0), 100);
+                }
+            }
 
-            // Xử lý kết quả tìm kiếm và thêm thông tin nền tảng
-            if (!is_null($responseData)) {
-                $results = $responseData['items'] ?? [];
-                $totalResults = min((int)($responseData['searchInformation']['totalResults'] ?? 0), 100);
-
-                // Lấy danh sách nền tảng từ bảng platforms
+            // Xử lý kết quả tìm kiếm
+            if (!empty($results)) {
                 $platforms = DB::table('platforms')->get()->keyBy('domain');
 
                 foreach ($results as &$result) {
@@ -120,17 +108,15 @@ class SerpApiController extends Controller
                     $domain = $domain ? str_replace('www.', '', strtolower($domain)) : 'unknown';
 
                     $result['domain'] = $domain;
-
                     $icon = $this->getIconForDomain($domain);
 
                     if ($platforms->has($domain)) {
-                        $platform = $platforms->get($domain);
-                        $result['platform'] = $platform->name;
-                        $result['platform_icon'] = $platform->icon;
-                        $result['platform_color'] = $platform->color;
+                        $platformData = $platforms->get($domain);
+                        $result['platform'] = $platformData->name;
+                        $result['platform_icon'] = $platformData->icon;
+                        $result['platform_color'] = $platformData->color;
                     } else {
                         $newName = ucfirst(str_replace(['.com', '.vn', '.org', '.net'], '', $domain));
-
                         DB::table('platforms')->updateOrInsert(
                             ['domain' => $domain],
                             [
@@ -150,22 +136,19 @@ class SerpApiController extends Controller
                     // Thêm hình ảnh thu nhỏ
                     $result['thumbnail'] = $result['pagemap']['cse_thumbnail'][0]['src'] ?? ($result['pagemap']['cse_image'][0]['src'] ?? null);
 
-                    // Lấy sentiment từ bảng search_logs
+                    // Lấy hoặc đánh giá cảm xúc
                     $sentiment = DB::table('search_logs')
                         ->where('query', $query)
                         ->where('platform', $result['platform'] ?? null)
                         ->value('sentiment');
 
-                    // Gán giá trị cảm xúc
                     $result['sentiment'] = $sentiment ?? $this->searchService->evaluateContent($result['link'], $result['snippet'] ?? '');
 
-                    // Dịch tiêu đề nếu cần
-                    $result['title'] = $this->searchService->translateText($result['title'], $lang);
-
-                    // Dịch mô tả (snippet) nếu có
+                    // Dịch tiêu đề và mô tả
+                    $result['title'] = $this->searchService->translateText($result['title'] ?? '', $lang);
                     $result['snippet'] = $this->searchService->translateText($result['snippet'] ?? '', $lang);
 
-                    // Lưu hoặc cập nhật vào bảng search_logs
+                    // Lưu vào search_logs
                     DB::table('search_logs')->updateOrInsert(
                         [
                             'query' => $query,
@@ -178,16 +161,19 @@ class SerpApiController extends Controller
                             'updated_at' => now()
                         ]
                     );
+
+                    // Chuẩn hóa link bài viết
+                    $result['link'] = $this->normalizeSocialMediaLink($result['link'], $domain);
                 }
 
-                // Nếu có lọc theo cảm xúc, áp dụng vào kết quả
+                // Lọc theo cảm xúc
                 if ($sentimentFilter) {
                     $results = array_filter($results, function ($result) use ($sentimentFilter) {
                         return stripos($result['sentiment'], $sentimentFilter) !== false;
                     });
                 }
 
-                // Tạo phân trang
+                // Lọc theo thời gian (đã áp dụng qua dateRestrict trong Google API)
                 $paginator = new LengthAwarePaginator(
                     $results,
                     $totalResults,
@@ -198,9 +184,115 @@ class SerpApiController extends Controller
             }
         }
 
-        return view('User.search.index', compact('results', 'query', 'paginator'));
+        return view('User.search.index', compact('results', 'query', 'paginator', 'platform'));
     }
 
+    protected function fetchGoogleSearch($apiKey, $cx, $query, $start, $perPage, $timeFilter)
+    {
+        $params = [
+            'key' => $apiKey,
+            'cx' => $cx,
+            'q' => $query,
+            'hl' => 'vi',
+            'gl' => 'vn',
+            'start' => $start,
+            'num' => $perPage,
+            'fields' => 'items(title,link,snippet,pagemap),searchInformation(totalResults)',
+        ];
+
+        if ($timeFilter) {
+            $params['dateRestrict'] = $this->mapTimeFilter($timeFilter);
+        }
+
+        $response = Http::get('https://www.googleapis.com/customsearch/v1', $params);
+
+        if ($response->failed()) {
+            Log::error('Lỗi gọi Google Custom Search API: ' . $response->status() . ' - ' . $response->body());
+            return null;
+        }
+
+        return $response->json();
+    }
+
+    protected function mapTimeFilter($timeFilter)
+    {
+        $mapping = [
+            '24h' => 'd1',
+            '7d' => 'w1',
+            '1m' => 'm1',
+        ];
+
+        return $mapping[$timeFilter] ?? '';
+    }
+
+    protected function searchOnSocialMedia($query, $platform, $page, $perPage, $realTime)
+    {
+        $apiKey = env('SOCIAL_MEDIA_API_KEY');
+        $accessToken = Cache::get('social_media_token_' . $platform);
+
+        if (!$accessToken) {
+            $accessToken = $this->authenticateSocialMedia($platform);
+            Cache::put('social_media_token_' . $platform, $accessToken, now()->addHours(1));
+        }
+
+        $endpoint = $this->getSocialMediaEndpoint($platform);
+        $params = [
+            'q' => $query,
+            'page' => $page,
+            'per_page' => $perPage,
+        ];
+
+        if ($timeFilter = request()->input('time')) {
+            $params['time_filter'] = $timeFilter;
+        }
+
+        $response = Http::withToken($accessToken)->get($endpoint, $params);
+
+        if ($response->failed()) {
+            Log::error("Lỗi gọi API mạng xã hội {$platform}: " . $response->status());
+            return [];
+        }
+
+        // Chuẩn hóa dữ liệu từ API mạng xã hội
+        $data = $response->json()['data'] ?? [];
+        $results = [];
+
+        foreach ($data as $item) {
+            $results[] = [
+                'title' => $item['title'] ?? $item['text'] ?? '',
+                'link' => $item['url'] ?? '',
+                'snippet' => $item['description'] ?? $item['text'] ?? '',
+                'pagemap' => ['cse_thumbnail' => [['src' => $item['thumbnail'] ?? null]]],
+            ];
+        }
+
+        return $results;
+    }
+
+    protected function authenticateSocialMedia($platform)
+    {
+        // Logic xác thực với API mạng xã hội (OAuth hoặc API Key)
+        // Thay bằng logic thực tế, ví dụ gọi endpoint xác thực
+        return 'mock_access_token';
+    }
+
+    protected function getSocialMediaEndpoint($platform)
+    {
+        $endpoints = [
+            'facebook.com' => 'https://graph.facebook.com/v12.0/search',
+            'twitter.com' => 'https://api.twitter.com/2/tweets/search/recent',
+            'instagram.com' => 'https://api.instagram.com/v1/search',
+        ];
+
+        return $endpoints[$platform] ?? '';
+    }
+
+    protected function normalizeSocialMediaLink($link, $platform)
+    {
+        // Chuẩn hóa link để dẫn trực tiếp đến bài viết
+        // Ví dụ: Loại bỏ query parameters không cần thiết
+        return $link; // Thay bằng logic thực tế nếu cần
+    }
 
     public function evaluateUrl(Request $request)
     {
@@ -210,5 +302,31 @@ class SerpApiController extends Controller
         $sentiment = $this->searchService->evaluateContent($url, $snippet);
 
         return response()->json(['sentiment' => $sentiment]);
+    }
+
+    public function autocomplete(Request $request)
+    {
+        $query = $request->input('query', '');
+        $suggestions = [];
+
+        if (strlen($query) >= 2) {
+            $cacheKey = 'autocomplete_' . md5($query);
+            $suggestions = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($query) {
+                $response = Http::get('https://suggestqueries.google.com/complete/search', [
+                    'client' => 'firefox',
+                    'q' => $query,
+                    'hl' => 'vi',
+                ]);
+
+                if ($response->successful()) {
+                    $data = $response->json();
+                    return $data[1] ?? [];
+                }
+
+                return [];
+            });
+        }
+
+        return response()->json($suggestions);
     }
 }
