@@ -1,98 +1,21 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-// Auth
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\LoginController;
 
-// Admin
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\UserControllerUser;
-use App\Http\Controllers\Admin\CardController;
+use App\Http\Controllers\AuthController;
 
-use App\Http\Controllers\Admin\SearchAdminController;
+Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+Route::post('/register', [AuthController::class, 'register']);
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-
-// User
-use App\Http\Controllers\User\ProfileController;
-use App\Http\Controllers\User\CardsController;
-
-use App\Http\Controllers\SerpApiController;
-use App\Http\Controllers\AutocompleteController;
-
-Route::middleware(['check.role:admin'])->group(function () {
-    Route::prefix('admin')->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
-    });
-
-    // Quản lý tìm kiếm
-    Route::prefix('admin')->group(function () {
-        Route::get('/search/history', [SearchAdminController::class, 'index'])->name('admin.search.history');
-        Route::get('/search/statistics', [SearchAdminController::class, 'statistics'])->name('admin.search.statistics');
-        Route::get('/search/evaluate', [SearchAdminController::class, 'evaluateForm'])->name('admin.search.evaluate.form');
-        Route::post('/search/evaluate', [SearchAdminController::class, 'evaluateManual'])->name('admin.search.evaluate');
-    });
-
-    // Quản lý user
-    Route::prefix('admin')->group(function () {
-        Route::get('/users', [UserControllerUser::class, 'index'])->name('admin.users.index');
-        Route::get('/users/{id}', [UserControllerUser::class, 'show'])->name('admin.users.show');
-        Route::get('/users/{id}/edit', [UserControllerUser::class, 'edit'])->name('admin.users.edit');
-        Route::put('/users/{id}', [UserControllerUser::class, 'update'])->name('admin.users.update');
-
-        Route::post('/users/{id}/add-balance', [UserControllerUser::class, 'addBalance'])->name('admin.users.addBalance');
-        Route::get('/users/{id}/toggle-status', [UserControllerUser::class, 'toggleStatus'])->name('admin.users.toggleStatus');
-    });
-    Route::prefix('admin')->group(function () {
-        // Quản lý cards
-        Route::get('cards', [CardController::class, 'index'])->name('admin.cards.index');
-        Route::patch('cards/{id}/status', [CardController::class, 'updateStatus'])->name('admin.updateCardStatus');
-    });
+Route::middleware(['check.role:admin,manager'])->group(function () {
+    Route::get('/dashboard', function () {
+        return view('admin.index');
+    })->name('dashboard');
 });
 
-Route::prefix('user')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
-    Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
-});
-
-// Routes đăng ký cho người dùng thông thường
-Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-Route::post('/register', [RegisterController::class, 'register']);
-
-// Routes đăng nhập cho người dùng thông thường
-Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'loginUser'])->name('user.login');
-
-// Routes đăng nhập cho quản trị viên
-Route::get('/admin/login', [LoginController::class, 'showAdminLoginForm'])->name('login.admin');
-Route::post('/admin/login', [LoginController::class, 'loginAdmin'])->name('admin.login');
-
-// Route đăng xuất
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-
-// Route trang chủ
 Route::get('/', function () {
-    return view('index');
-})->name('home');
-
-// Route 404
-Route::get('/404', function () {
-    return view('errors.404');
-})->name('404');
-
-// Route::get('/google-search', [SerpApiController::class, 'searchGoogle'])->name('google.search');
-
-// Cards routes 
-Route::middleware(['auth'])->group(function () {
-    Route::post('/cards/submit', [CardsController::class, 'submitCard'])->name('cards.submit');
-    Route::post('/cards/callback', [CardsController::class, 'callback'])->name('callback.card');
-    Route::get('/cards/history', [CardsController::class, 'history'])->name('cards.history');
-});
-
-// Route hiển thị form tìm kiếm
-Route::get('/search', [SerpApiController::class, 'showSearchForm'])->name('search.form');
-
-// Route xử lý tìm kiếm
-Route::get('/search/results', [SerpApiController::class, 'search'])->name('search.results');
-
-Route::get('/autocomplete', [AutocompleteController::class, 'suggest']);
+    return view('welcome');
+})->name('welcome');
