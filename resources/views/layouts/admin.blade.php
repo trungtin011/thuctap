@@ -20,6 +20,8 @@
                     <a href="{{ route('users.index') }}" class="block px-3 py-2 rounded hover:bg-indigo-800">Quản lý người dùng</a>
                     <a href="{{ route('roles.index') }}" class="block px-3 py-2 rounded hover:bg-indigo-800">Quản lý vai trò</a>
                     <a href="{{ route('departments.index') }}" class="block px-3 py-2 rounded hover:bg-indigo-800">Quản lý phòng ban</a>
+                    <a href="{{ route('platforms.index') }}" class="block px-3 py-2 rounded hover:bg-indigo-800">Quản lý nền tảng</a>
+                    <a href="{{ route('expense-types.index') }}" class="block px-3 py-2 rounded hover:bg-indigo-800">Quản lý loại chi phí</a>
                     {{-- Thêm các menu admin khác nếu cần --}}
                 </nav>
                 <div class="p-4 border-t border-indigo-800 mt-auto">

@@ -4,8 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PlatformController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\Employee\FinancialController;
+use App\Http\Controllers\ExpenseTypesController;
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -26,6 +28,8 @@ Route::middleware(['check.role:admin'])->group(function () {
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     Route::resource('roles', RoleController::class)->except(['show']);
     Route::resource('departments', DepartmentController::class)->except(['show']);
+    Route::resource('platforms', PlatformController::class)->except(['show']);
+    Route::resource('expense-types', ExpenseTypesController::class)->except(['show']);
 });
 
 Route::prefix('employee/financial')->middleware('auth')->group(function () {
