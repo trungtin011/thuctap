@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -22,6 +23,7 @@
                             <a href="{{ route('dashboard') }}" class="text-white hover:underline">Quản lý doanh thu</a>
                         @elseif ($role && $role->level === 'employee')
                             <a href="{{ route('welcome') }}" class="text-white hover:underline">Trang chủ</a>
+                            <a href="{{ route('employee.financial.index') }}" class="text-white hover:underline">Nhập doanh thu</a>
                         @endif
                         <span>{{ Auth::user()->name }}</span>
                         <form action="{{ route('logout') }}" method="POST">
@@ -47,7 +49,7 @@
         </main>
 
         <footer class="bg-gray-800 text-white text-center p-4">
-            <p>&copy; 2025 Company Revenue. All rights reserved.</p>
+            <p>© 2025 Company Revenue. All rights reserved.</p>
         </footer>
     </div>
 </body>

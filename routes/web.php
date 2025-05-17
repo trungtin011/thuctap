@@ -1,11 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\Employee\FinancialController;
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -26,6 +26,15 @@ Route::middleware(['check.role:admin'])->group(function () {
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     Route::resource('roles', RoleController::class)->except(['show']);
     Route::resource('departments', DepartmentController::class)->except(['show']);
+});
+
+Route::prefix('employee/financial')->middleware('auth')->group(function () {
+    Route::get('/', [FinancialController::class, 'index'])->name('employee.financial.index');
+    Route::get('/create', [FinancialController::class, 'create'])->name('employee.financial.create');
+    Route::post('/store', [FinancialController::class, 'store'])->name('employee.financial.store');
+    Route::get('/{id}/edit', [FinancialController::class, 'edit'])->name('employee.financial.edit');
+    Route::put('/{id}', [FinancialController::class, 'update'])->name('employee.financial.update');
+    Route::delete('/{id}', [FinancialController::class, 'destroy'])->name('employee.financial.destroy');
 });
 
 Route::get('/', function () {
