@@ -18,7 +18,7 @@ class FinancialController extends Controller
         $employee = Auth::user();
         $financialRecords = FinancialRecord::where('submitted_by', $employee->id)
             ->with(['department', 'platform', 'expenses', 'submittedBy'])
-            ->orderBy('created_at', 'desc')
+            ->orderBy('record_date', 'desc')
             ->get();
         $platforms = Platform::all();
         $expenseTypes = ExpenseType::all();

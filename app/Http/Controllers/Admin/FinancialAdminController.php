@@ -10,12 +10,42 @@ use Carbon\CarbonPeriod;
 
 class FinancialAdminController extends Controller
 {
-public function index()
+public function index(Request $request)
     {
-       
-        $financialRecords = FinancialRecord::where('status', 'manager_approved')->get();
+        $departments = \App\Models\Department::all();
+        $platforms = \App\Models\Platform::all();
 
-        return view('admin.financial.index', compact('financialRecords'));
+        $query = FinancialRecord::query()->with(['department', 'platform', 'submittedBy']);
+
+        // Lọc theo trạng thái
+        $status = $request->input('status', 'manager_approved');
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        // Lọc theo phòng ban
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
+        // Lọc theo nền tảng
+        if ($request->filled('platform_id')) {
+            $query->where('platform_id', $request->platform_id);
+        }
+
+        // Lọc theo ngày bắt đầu
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+
+        // Lọc theo ngày kết thúc
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+
+        $financialRecords = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        return view('admin.financial.index', compact('financialRecords', 'departments', 'platforms', 'status'));
     }
 
     public function approve($id)
@@ -42,26 +72,27 @@ public function totalRevenue(Request $request)
     $query = FinancialRecord::where('status', 'admin_approved');
 
     if ($start && $end) {
-        $query->whereBetween('created_at', [$start . ' 00:00:00', $end . ' 23:59:59']);
+        $query->whereBetween('record_date', [$start, $end]);
+    } elseif ($start) {
+        $query->where('record_date', '>=', $start);
+    } elseif ($end) {
+        $query->where('record_date', '<=', $end);
     }
 
     $records = $query->get();
 
-    $totalRevenue = $records->sum('amount');
+    $totalRevenue = $records->sum('revenue');
 
     $labels = [];
     $data = [];
 
-    if ($start && $end) {
-        $period = \Carbon\CarbonPeriod::create($start, $end);
+    // Lấy các ngày có dữ liệu thực tế theo record_date
+    if ($records->count() > 0) {
+        $dates = $records->pluck('record_date')->unique()->sort()->values();
 
-        foreach ($period as $date) {
-            $labels[] = $date->format('Y-m-d');
-
-            $dailySum = $records->filter(function ($record) use ($date) {
-                return $record->created_at->format('Y-m-d') === $date->format('Y-m-d');
-            })->sum('amount');
-
+        foreach ($dates as $date) {
+            $labels[] = $date;
+            $dailySum = $records->where('record_date', $date)->sum('revenue');
             $data[] = $dailySum;
         }
     }

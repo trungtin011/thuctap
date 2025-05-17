@@ -8,6 +8,42 @@
         <h5 class="mb-0">Lịch Sử Doanh Thu</h5>
     </div>
     <div class="card-body">
+        {{-- Form lọc nâng cao --}}
+        <form method="GET" action="" class="row g-3 mb-4 align-items-end">
+            <div class="col-md-3">
+                <label for="filter_platform" class="form-label">Nền tảng</label>
+                <select id="filter_platform" name="platform_id" class="form-select">
+                    <option value="">Tất cả</option>
+                    @foreach($platforms as $platform)
+                        <option value="{{ $platform->id }}" {{ request('platform_id') == $platform->id ? 'selected' : '' }}>
+                            {{ $platform->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="filter_status" class="form-label">Trạng thái</label>
+                <select id="filter_status" name="status" class="form-select">
+                    <option value="">Tất cả</option>
+                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Đang chờ</option>
+                    <option value="manager_approved" {{ request('status') == 'manager_approved' ? 'selected' : '' }}>Quản lý duyệt</option>
+                    <option value="admin_approved" {{ request('status') == 'admin_approved' ? 'selected' : '' }}>Admin duyệt</option>
+                    <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Bị từ chối</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="filter_start_date" class="form-label">Từ ngày</label>
+                <input type="date" class="form-control" id="filter_start_date" name="start_date" value="{{ request('start_date') }}">
+            </div>
+            <div class="col-md-2">
+                <label for="filter_end_date" class="form-label">Đến ngày</label>
+                <input type="date" class="form-control" id="filter_end_date" name="end_date" value="{{ request('end_date') }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Lọc</button>
+            </div>
+        </form>
+        {{-- End form lọc --}}
         @if ($financialRecords->isEmpty())
             <p class="text-muted">Bạn chưa có bản ghi doanh thu nào.</p>
         @else
@@ -22,7 +58,7 @@
                             <th scope="col">Tổng chi phí</th>
                             <th scope="col">ROAS</th>
                             <th scope="col">Trạng thái</th>
-                            <th scope="col">Ngày tạo</th>
+                            <th scope="col">Ngày ghi nhận</th>
                             <th scope="col">Hành động</th>
                         </tr>
                     </thead>
@@ -59,7 +95,7 @@
                                             <span class="badge bg-secondary">Không rõ</span>
                                     @endswitch
                                 </td>
-                                <td>{{ $record->created_at->format('d/m/Y H:i') }}</td>
+                                <td>{{ $record->record_date }}</td>
                                 <td>
                                     @if($record->status == 'pending')
                                         <button type="button" class="btn btn-sm btn-primary me-1 edit-btn" title="Sửa" data-bs-toggle="modal" data-bs-target="#editFinancialModal">
@@ -116,21 +152,13 @@
 
                     <div class="mb-3">
                         <label class="form-label">Doanh thu</label>
-                        <input type="number" name="revenue" class="form-control" step="0.01" required>
+                        <input type="number" name="revenue" class="form-control" step="0.01" min="0" required placeholder="Nhập số tiền doanh thu">
                         <div class="invalid-feedback" id="revenue_error"></div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Ngày ghi nhận</label>
-                        <input type="date" name="record_date" class="form-control" required>
-                        <div class="invalid-feedback" id="record_date_error"></div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Thời gian ghi nhận</label>
-                        <input type="time" name="record_time" class="form-control" required>
-                        <div class="invalid-feedback" id="record_time_error"></div>
-                    </div>
+                    {{-- Lấy ra ngày và giờ đã tự động set --}}
+                    <input type="hidden" name="record_date" id="auto_record_date">
+                    <input type="hidden" name="record_time" id="auto_record_time">
 
                     <div class="mb-3">
                         <label class="form-label">Ghi chú</label>
@@ -516,6 +544,23 @@
                 }
             });
         });
+    });
+
+    // Tự động set ngày giờ Việt Nam khi mở modal nhập mới
+    document.getElementById('financialModal').addEventListener('show.bs.modal', function () {
+        // Lấy giờ Việt Nam (UTC+7) đúng chuẩn
+        const now = new Date();
+        // UTC+7:00
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const vnDate = new Date(utc + 7 * 60 * 60000);
+
+        const yyyy = vnDate.getFullYear();
+        const mm = String(vnDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(vnDate.getDate()).padStart(2, '0');
+        const hh = String(vnDate.getHours()).padStart(2, '0');
+        const min = String(vnDate.getMinutes()).padStart(2, '0');
+        document.getElementById('auto_record_date').value = `${yyyy}-${mm}-${dd}`;
+        document.getElementById('auto_record_time').value = `${hh}:${min}`;
     });
 </script>
 @endsection
