@@ -1,86 +1,86 @@
-@extends('layouts.admin')
+@extends('layouts.navbar')
+
+@section('title', 'Lịch Sử Doanh Thu')
 
 @section('content')
-<div class="container mt-5">
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Lịch Sử Doanh Thu</h5>
-        </div>
-        <div class="card-body">
-            @if ($financialRecords->isEmpty())
-                <p class="text-muted">Bạn chưa có bản ghi doanh thu nào.</p>
-            @else
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover table-bordered align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col">ID</th>
-                                <th scope="col">Phòng ban</th>
-                                <th scope="col">Nền tảng</th>
-                                <th scope="col">Doanh thu</th>
-                                <th scope="col">Tổng chi phí</th>
-                                <th scope="col">ROAS</th>
-                                <th scope="col">Trạng thái</th>
-                                <th scope="col">Ngày tạo</th>
-                                <th scope="col">Hành động</th>
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Lịch Sử Doanh Thu</h5>
+    </div>
+    <div class="card-body">
+        @if ($financialRecords->isEmpty())
+            <p class="text-muted">Bạn chưa có bản ghi doanh thu nào.</p>
+        @else
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Phòng ban</th>
+                            <th scope="col">Nền tảng</th>
+                            <th scope="col">Doanh thu</th>
+                            <th scope="col">Tổng chi phí</th>
+                            <th scope="col">ROAS</th>
+                            <th scope="col">Trạng thái</th>
+                            <th scope="col">Ngày tạo</th>
+                            <th scope="col">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($financialRecords as $record)
+                            <tr data-id="{{ $record->id }}"
+                                data-platform-id="{{ $record->platform_id }}"
+                                data-revenue="{{ $record->revenue }}"
+                                data-record-date="{{ $record->record_date }}"
+                                data-record-time="{{ $record->record_time }}"
+                                data-note="{{ $record->note }}"
+                                data-expenses="{{ json_encode($record->expenses) }}">
+                                <td>{{ $record->id }}</td>
+                                <td>{{ $record->department->name }}</td>
+                                <td>{{ $record->platform->name }}</td>
+                                <td>{{ number_format($record->revenue, 2) }}</td>
+                                <td>{{ number_format($record->expenses->sum('amount'), 2) }}</td>
+                                <td>{{ $record->roas ? number_format($record->roas, 2) : 'N/A' }}</td>
+                                <td>
+                                    @switch($record->status)
+                                        @case('pending')
+                                            <span class="badge bg-warning text-dark">Đang chờ</span>
+                                            @break
+                                        @case('manager_approved')
+                                            <span class="badge bg-info">Quản lý duyệt</span>
+                                            @break
+                                        @case('admin_approved')
+                                            <span class="badge bg-success">Admin duyệt</span>
+                                            @break
+                                        @case('rejected')
+                                            <span class="badge bg-danger">Bị từ chối</span>
+                                            @break
+                                        @default
+                                            <span class="badge bg-secondary">Không rõ</span>
+                                    @endswitch
+                                </td>
+                                <td>{{ $record->created_at->format('d/m/Y H:i') }}</td>
+                                <td>
+                                    @if($record->status == 'pending')
+                                        <button type="button" class="btn btn-sm btn-primary me-1 edit-btn" title="Sửa" data-bs-toggle="modal" data-bs-target="#editFinancialModal">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-danger delete-record" data-id="{{ $record->id }}" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    @endif
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($financialRecords as $record)
-                                <tr data-id="{{ $record->id }}" 
-                                    data-platform-id="{{ $record->platform_id }}"
-                                    data-revenue="{{ $record->revenue }}"
-                                    data-record-date="{{ $record->record_date }}"
-                                    data-record-time="{{ $record->record_time }}"
-                                    data-note="{{ $record->note }}"
-                                    data-expenses="{{ json_encode($record->expenses) }}">
-                                    <td>{{ $record->id }}</td>
-                                    <td>{{ $record->department->name }}</td>
-                                    <td>{{ $record->platform->name }}</td>
-                                    <td>{{ number_format($record->revenue, 2) }}</td>
-                                    <td>{{ number_format($record->expenses->sum('amount'), 2) }}</td>
-                                    <td>{{ $record->roas ? number_format($record->roas, 2) : 'N/A' }}</td>
-                                    <td>
-                                        @switch($record->status)
-                                            @case('pending')
-                                                <span class="badge bg-warning text-dark">Đang chờ</span>
-                                                @break
-                                            @case('manager_approved')
-                                                <span class="badge bg-info">Quản lý duyệt</span>
-                                                @break
-                                            @case('admin_approved')
-                                                <span class="badge bg-success">Admin duyệt</span>
-                                                @break
-                                            @case('rejected')
-                                                <span class="badge bg-danger">Bị từ chối</span>
-                                                @break
-                                            @default
-                                                <span class="badge bg-secondary">Không rõ</span>
-                                        @endswitch
-                                    </td>
-                                    <td>{{ $record->created_at->format('d/m/Y H:i') }}</td>
-                                    <td>
-                                        @if($record->status == 'pending')
-                                            <button type="button" class="btn btn-sm btn-primary me-1 edit-btn" title="Sửa" data-bs-toggle="modal" data-bs-target="#editFinancialModal">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-danger delete-record" data-id="{{ $record->id }}" title="Xóa">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endif
-
-            <div class="mt-4">
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#financialModal">
-                    <i class="bi bi-plus-circle me-1"></i> Nhập bản ghi mới
-                </button>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
+        @endif
+
+        <div class="mt-4">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#financialModal">
+                <i class="bi bi-plus-circle me-1"></i> Nhập bản ghi mới
+            </button>
         </div>
     </div>
 </div>
@@ -351,7 +351,7 @@
             const row = this.closest('tr');
             const recordId = row.getAttribute('data-id');
             const form = document.getElementById('editFinancialForm');
-            
+
             // Set form action and record ID
             form.action = `/employee/financial/${recordId}`;
             form.querySelector('input[name="record_id"]').value = recordId;
