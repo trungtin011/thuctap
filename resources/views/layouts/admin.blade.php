@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title') - Admin - Company Revenue</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    
+    <link rel="stylesheet" type="text/css" href="{{ asset('css/style.css') }}">
+    <link rel="stylesheet" href="https://kit-pro.fontawesome.com/releases/v5.12.1/css/pro.min.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
 </head>
+
 <body class="bg-gray-50 font-sans">
     <div class="min-h-screen flex flex-col">
         <div class="flex flex-1 min-h-0">
@@ -17,16 +22,21 @@
                 </div>
                 <nav class="flex-1 p-4 space-y-2">
                     <a href="{{ route('dashboard') }}" class="block px-3 py-2 rounded hover:bg-indigo-800">Dashboard</a>
-                    <a href="{{ route('users.index') }}" class="block px-3 py-2 rounded hover:bg-indigo-800">Quản lý người dùng</a>
-                    <a href="{{ route('roles.index') }}" class="block px-3 py-2 rounded hover:bg-indigo-800">Quản lý vai trò</a>
-                    <a href="{{ route('departments.index') }}" class="block px-3 py-2 rounded hover:bg-indigo-800">Quản lý phòng ban</a>
-                    <a href="{{ route('platforms.index') }}" class="block px-3 py-2 rounded hover:bg-indigo-800">Quản lý nền tảng</a>
-                    <a href="{{ route('expense-types.index') }}" class="block px-3 py-2 rounded hover:bg-indigo-800">Quản lý loại chi phí</a>
+                    <a href="{{ route('users.index') }}" class="block px-3 py-2 rounded hover:bg-indigo-800">Quản lý
+                        người dùng</a>
+                    <a href="{{ route('roles.index') }}" class="block px-3 py-2 rounded hover:bg-indigo-800">Quản lý vai
+                        trò</a>
+                    <a href="{{ route('departments.index') }}" class="block px-3 py-2 rounded hover:bg-indigo-800">Quản
+                        lý phòng ban</a>
+                    <a href="{{ route('platforms.index') }}" class="block px-3 py-2 rounded hover:bg-indigo-800">Quản lý
+                        nền tảng</a>
+                    <a href="{{ route('expense-types.index') }}"
+                        class="block px-3 py-2 rounded hover:bg-indigo-800">Quản lý loại chi phí</a>
                     {{-- Thêm các menu admin khác nếu cần --}}
                 </nav>
                 <div class="p-4 border-t border-indigo-800 mt-auto">
                     <div class="mb-2">{{ Auth::user()->name }}</div>
-                    <form action="{{ route('logout') }}" method="POST" class="inline">
+                    <form action="{{ route('logout') }}" method="POST">
                         @csrf
                         <button type="submit" class="text-white hover:underline">Đăng xuất</button>
                     </form>
@@ -51,5 +61,8 @@
             </main>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="{{ asset('js/scripts.js') }}"></script>
 </body>
+
 </html>

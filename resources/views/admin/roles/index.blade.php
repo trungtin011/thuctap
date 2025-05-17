@@ -3,7 +3,7 @@
 @section('title', 'Quản lý vai trò')
 
 @section('content')
-<div class="max-w-4xl mx-auto">
+<div class="mx-auto">
     <h2 class="text-2xl font-bold mb-6">Danh sách vai trò</h2>
     <a href="{{ route('roles.create') }}" class="mb-4 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Thêm vai trò</a>
     @if(session('success'))
@@ -21,7 +21,7 @@
         </thead>
         <tbody>
             @foreach($roles as $role)
-            <tr class="border-t">
+            <tr class="border-t text-center">
                 <td class="px-4 py-2">{{ $role->name }}</td>
                 <td class="px-4 py-2">{{ $role->level }}</td>
                 <td class="px-4 py-2">{{ $role->department->name ?? '' }}</td>

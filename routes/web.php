@@ -8,6 +8,7 @@ use App\Http\Controllers\PlatformController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\Employee\FinancialController;
 use App\Http\Controllers\ExpenseTypesController;
+use App\Http\Controllers\Revenue\DashboardController;
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -15,10 +16,17 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 
+Route::middleware(['check.role:admin,manager'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::prefix('admin/financial')->group(function () {
+        Route::get('/', [FinancialController::class, 'adminIndex'])->name('admin.financial.index');
+        Route::post('/{id}/approve', [FinancialController::class, 'approve'])->name('admin.financial.approve');
+        Route::post('/{id}/reject', [FinancialController::class, 'reject'])->name('admin.financial.reject');
+    });
+});
+
 Route::middleware(['check.role:admin'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('admin.index');
-    })->name('dashboard');
 
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::get('/users/create', [UserController::class, 'create'])->name('users.create');

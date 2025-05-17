@@ -3,7 +3,7 @@
 @section('title', 'Quản lý phòng ban')
 
 @section('content')
-<div class="max-w-4xl mx-auto">
+<div class="mx-auto">
     <h2 class="text-2xl font-bold mb-6">Danh sách phòng ban</h2>
     <a href="{{ route('departments.create') }}" class="mb-4 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Thêm phòng ban</a>
     @if(session('success'))
@@ -19,7 +19,7 @@
         </thead>
         <tbody>
             @foreach($departments as $department)
-            <tr class="border-t">
+            <tr class="border-t text-center">
                 <td class="px-4 py-2">{{ $department->name }}</td>
                 <td class="px-4 py-2">{{ $department->description }}</td>
                 <td class="px-4 py-2">

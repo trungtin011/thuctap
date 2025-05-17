@@ -3,7 +3,7 @@
 @section('title', 'Platforms Management')
 
 @section('content')
-<div class="max-w-4xl mx-auto">
+<div class="mx-auto">
     <h2 class="text-2xl font-bold mb-6">Platforms Management</h2>
     <a href="{{ route('platforms.create') }}" class="mb-4 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Create New Platform</a>
     @if(session('success'))
@@ -20,7 +20,7 @@
     </thead>
     <tbody>
         @forelse ($platforms as $platform)
-        <tr class="border-t">
+        <tr class="border-t text-center">
             <td class="px-4 py-2 text-center">{{ $platform->id }}</td>
             <td class="px-4 py-2 text-center">{{ $platform->name }}</td>
             <td class="px-4 py-2 text-center">

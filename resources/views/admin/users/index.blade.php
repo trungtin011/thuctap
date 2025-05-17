@@ -3,7 +3,7 @@
 @section('title', 'Quản lý người dùng')
 
 @section('content')
-<div class="max-w-5xl mx-auto">
+<div class="mx-auto">
     <h2 class="text-2xl font-bold mb-6">Danh sách người dùng</h2>
     <a href="{{ route('users.create') }}" class="mb-4 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Thêm người dùng</a>
     @if(session('success'))
@@ -21,7 +21,7 @@
         </thead>
         <tbody>
             @foreach($users as $user)
-            <tr class="border-t">
+            <tr class="border-t text-center">
                 <td class="px-4 py-2">{{ $user->name }}</td>
                 <td class="px-4 py-2">{{ $user->email }}</td>
                 <td class="px-4 py-2">{{ $user->department->name ?? '' }}</td>

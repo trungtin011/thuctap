@@ -3,7 +3,7 @@
 @section('title', 'Expense Types')
 
 @section('content')
-<div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+<div class="mx-auto bg-white p-6 rounded shadow">
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-bold">Expense Types</h2>
         <a href="{{ route('expense-types.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add New</a>
@@ -18,14 +18,14 @@
     @else
         <table class="w-full border-collapse">
             <thead>
-                <tr class="bg-gray-100">
-                    <th class="border px-4 py-2 text-left">Name</th>
-                    <th class="border px-4 py-2 text-left">Actions</th>
+                <tr class="bg-gray-100 text-center">
+                    <th class="border px-4 py-2">Name</th>
+                    <th class="border px-4 py-2">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($expenseTypes as $expenseType)
-                    <tr>
+                    <tr class="border-t text-center">
                         <td class="border px-4 py-2">{{ $expenseType->name }}</td>
                         <td class="border px-4 py-2">
                             <a href="{{ route('expense-types.edit', $expenseType) }}" class="text-blue-600 hover:underline">Edit</a>
