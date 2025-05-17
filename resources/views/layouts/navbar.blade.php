@@ -13,6 +13,16 @@
                 <h1 class="text-2xl font-bold">Company Revenue</h1>
                 @auth
                     <div class="flex items-center space-x-4">
+                        @php
+                            $role = Auth::user()->role;
+                        @endphp
+                        @if ($role && $role->level === 'admin')
+                            <a href="{{ route('dashboard') }}" class="text-white hover:underline">Quản trị hệ thống</a>
+                        @elseif ($role && $role->level === 'manager')
+                            <a href="{{ route('dashboard') }}" class="text-white hover:underline">Quản lý doanh thu</a>
+                        @elseif ($role && $role->level === 'employee')
+                            <a href="{{ route('welcome') }}" class="text-white hover:underline">Trang chủ</a>
+                        @endif
                         <span>{{ Auth::user()->name }}</span>
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf
@@ -22,7 +32,6 @@
                 @else
                     <div>
                         <a href="{{ route('login') }}" class="text-white hover:underline">Đăng nhập</a>
-                        <a href="{{ route('register') }}" class="text-white hover:underline ml-4">Đăng ký</a>
                     </div>
                 @endauth
             </div>

@@ -32,8 +32,5 @@
                 Đăng nhập
             </button>
         </form>
-        <p class="mt-4 text-center">
-            Chưa có tài khoản? <a href="{{ route('register') }}" class="text-blue-600 hover:underline">Đăng ký</a>
-        </p>
     </div>
 @endsection

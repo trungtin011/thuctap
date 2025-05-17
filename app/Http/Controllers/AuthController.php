@@ -10,34 +10,6 @@ use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
-    // Hiển thị form đăng ký
-    public function showRegisterForm()
-    {
-        return view('auth.register');
-    }
-
-    // Xử lý đăng ký
-    public function register(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:100',
-            'email' => 'required|string|email|max:255|unique:employees',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
-        $employee = Employee::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'department_id' => 1, // Giả sử mặc định là phòng ban ID=1
-            'role_id' => 1, // Giả sử mặc định là vai trò ID=1 (nhân viên)
-        ]);
-
-        Auth::login($employee);
-
-        return redirect()->route('welcome')->with('success', 'Đăng ký thành công!');
-    }
-
     // Hiển thị form đăng nhập
     public function showLoginForm()
     {
@@ -54,20 +26,24 @@ class AuthController extends Controller
 
         Log::info('Login attempt', ['email' => $credentials['email']]);
 
-        if (Auth::attempt($credentials)) {
-            Log::info('Login successful', ['email' => $credentials['email']]);
+        if (\Illuminate\Support\Facades\Auth::attempt($credentials)) {
             $request->session()->regenerate();
+            $user = \Illuminate\Support\Facades\Auth::user();
 
-            // Lấy thông tin người dùng
-            $user = Auth::user();
+            // Điều hướng dựa trên vai trò (role_id động)
+            $roleId = $user->role_id;
 
-            // Điều hướng dựa trên vai trò
-            if ($user->role_id == 3) { // Admin
+            // Nếu là admin (role_id = 3 hoặc role có level = 'admin')
+            $role = \App\Models\Role::find($roleId);
+            if ($role && $role->level === 'admin') {
                 return redirect()->route('dashboard')->with('success', 'Đăng nhập thành công!');
-            } elseif ($user->role_id == 2) { // Manager
+            } elseif ($role && $role->level === 'manager') {
                 return redirect()->route('dashboard')->with('success', 'Đăng nhập thành công!');
-            } elseif ($user->role_id == 1) { // Employee
+            } elseif ($role && $role->level === 'employee') {
                 return redirect()->route('welcome')->with('success', 'Đăng nhập thành công!');
+            } else {
+                \Illuminate\Support\Facades\Auth::logout();
+                return back()->withErrors(['email' => 'Tài khoản không có quyền truy cập (role không hợp lệ).'])->onlyInput('email');
             }
         }
 
@@ -85,5 +61,48 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect('/login')->with('success', 'Đăng xuất thành công!');
+    }
+
+    // Hiển thị form đăng ký
+    public function showRegisterForm()
+    {
+        return view('auth.register');
+    }
+
+    // Xử lý đăng ký
+    public function register(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:100',
+            'email' => 'required|string|email|max:255|unique:employees',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        // Lấy phòng ban mặc định (phòng ban đầu tiên)
+        $defaultDepartment = \App\Models\Department::first();
+
+        // Luôn lấy vai trò có level = 'employee' của phòng ban đó
+        $defaultRole = null;
+        if ($defaultDepartment) {
+            $defaultRole = \App\Models\Role::where('level', 'employee')
+                ->where('department_id', $defaultDepartment->id)
+                ->first();
+        }
+
+        if (!$defaultDepartment || !$defaultRole) {
+            return back()->withErrors(['register' => 'Không tìm thấy phòng ban hoặc vai trò mặc định. Vui lòng liên hệ quản trị viên.'])->withInput();
+        }
+
+        $employee = \App\Models\Employee::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+            'department_id' => $defaultDepartment->id,
+            'role_id' => $defaultRole->id,
+        ]);
+
+        \Illuminate\Support\Facades\Auth::login($employee);
+
+        return redirect()->route('welcome')->with('success', 'Đăng ký thành công!');
     }
 }
