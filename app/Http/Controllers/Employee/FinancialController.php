@@ -13,15 +13,45 @@ use Illuminate\Support\Facades\Auth;
 
 class FinancialController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $employee = Auth::user();
-        $financialRecords = FinancialRecord::where('submitted_by', $employee->id)
+
+        // Xác thực các tham số lọc
+        $request->validate([
+            'platform_id' => 'nullable|exists:platforms,id',
+            'status' => 'nullable|in:pending,manager_approved,admin_approved,rejected',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
+
+        // Bắt đầu truy vấn
+        $query = FinancialRecord::where('submitted_by', $employee->id)
             ->with(['department', 'platform', 'expenses', 'submittedBy'])
-            ->orderBy('record_date', 'desc')
-            ->get();
+            ->orderBy('record_date', 'desc');
+
+        // Áp dụng bộ lọc
+        if ($request->filled('platform_id')) {
+            $query->where('platform_id', $request->platform_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('start_date')) {
+            $query->where('record_date', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->where('record_date', '<=', $request->end_date);
+        }
+
+        // Lấy kết quả
+        $financialRecords = $query->get();
         $platforms = Platform::all();
         $expenseTypes = ExpenseType::all();
+
         return view('employee.financial.index', compact('financialRecords', 'platforms', 'expenseTypes'));
     }
 
