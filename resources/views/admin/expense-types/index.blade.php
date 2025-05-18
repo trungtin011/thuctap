@@ -1,44 +1,59 @@
 @extends('layouts.admin')
 
-@section('title', 'Expense Types')
+@section('title', 'Quản lý loại chi phí')
 
 @section('content')
-<div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-bold">Expense Types</h2>
-        <a href="{{ route('expense-types.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add New</a>
+    <div class="flex items-center mt-4" style="background-color: #f1f1f1; padding: 20px 16px;">
+        <h2 class="text-md underline">
+            Danh sách loại chi phí
+        </h2>
     </div>
-    @if (session('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4">
-            {{ session('success') }}
+    <div class="p-4 mx-auto">
+        <div class="flex justify-between mb-4">
+            <div class="flex justify-between">
+                <a href="{{ route('expense-types.create') }}" class="inline-block hover:text-blue-700">
+                    <button class="bg-blue-600 text-white px-4 py-2 hover:bg-blue-700 transition duration-300 ease-in-out">
+                        <i class="fas fa-plus mr-2"></i> Thêm loại chi phí
+                    </button>
+                </a>
+            </div>
+            <form action="{{ route('expense-types.index') }}" method="GET" class="flex items-center">
+                <input type="text" name="search" placeholder="Tìm kiếm loại chi phí..."
+                    class="border border-gray-300 px-4 py-2" style="width: 400px;" value="{{ request()->get('search') }}">
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 hover:bg-blue-700"><i
+                        class="fas fa-search"></i></button>
+            </form>
         </div>
-    @endif
-    @if ($expenseTypes->isEmpty())
-        <p class="text-gray-600">No expense types found.</p>
-    @else
-        <table class="w-full border-collapse">
-            <thead>
-                <tr class="bg-gray-100">
-                    <th class="border px-4 py-2 text-left">Name</th>
-                    <th class="border px-4 py-2 text-left">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($expenseTypes as $expenseType)
+        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <table class="w-full text-sm text-left rtl:text-right text-gray-900">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                     <tr>
-                        <td class="border px-4 py-2">{{ $expenseType->name }}</td>
-                        <td class="border px-4 py-2">
-                            <a href="{{ route('expense-types.edit', $expenseType) }}" class="text-blue-600 hover:underline">Edit</a>
-                            <form action="{{ route('expense-types.destroy', $expenseType) }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:underline ml-2" onclick="return confirm('Are you sure?')">Delete</button>
-                            </form>
-                        </td>
+                        <th scope="col" class="px-6 py-3 bg-white">Tên loại chi phí</th>
+                        <th scope="col" class="px-6 py-3 bg-white">Hành động</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @endif
-</div>
+                </thead>
+                <tbody>
+                    @foreach ($expenseTypes as $expenseType)
+                        <tr class="border-b border-gray-200 bg-white">
+                            <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ $expenseType->name }}</td>
+                            <td class="px-6 py-4">
+                                <a href="{{ route('expense-types.edit', $expenseType) }}"
+                                    class="font-medium text-blue-600 hover:underline">Sửa</a>
+                                <form action="{{ route('expense-types.destroy', $expenseType) }}" method="POST"
+                                    class="inline-block" onsubmit="return confirm('Bạn chắc chắn muốn xóa?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-600 hover:underline ml-2">Xóa</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4">
+            {{ $expenseTypes->links() }} <!-- Pagination links -->
+        </div>
+    </div>
 @endsection

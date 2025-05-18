@@ -7,11 +7,18 @@ use Illuminate\Http\Request;
 
 class DepartmentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $departments = Department::paginate(10);
+        $query = Department::query();
+
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        $departments = $query->paginate(10); // Adjust the number of items per page as needed
         return view('admin.departments.index', compact('departments'));
     }
+
 
     public function create()
     {

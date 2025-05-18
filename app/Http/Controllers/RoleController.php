@@ -8,11 +8,24 @@ use Illuminate\Http\Request;
 
 class RoleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $roles = Role::with('department')->paginate(10);
-        return view('admin.roles.index', compact('roles'));
+        $query = Role::with('department');
+
+        if ($request->has('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->has('department_id') && $request->department_id != '') {
+            $query->where('department_id', $request->department_id);
+        }
+
+        $roles = $query->paginate(10);
+        $departments = Department::all();
+
+        return view('admin.roles.index', compact('roles', 'departments'));
     }
+
 
     public function create()
     {

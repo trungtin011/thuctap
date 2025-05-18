@@ -43,9 +43,7 @@ Route::middleware(['check.role:admin,manager'])->group(function () {
 });
 
 Route::middleware(['check.role:admin'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('admin.index');
-    })->name('dashboard');
+    Route::get('dashboard', [FinancialAdminController::class, 'totalRevenue'])->name('dashboard');
 
     Route::prefix('users')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('users.index');

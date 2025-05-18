@@ -7,6 +7,8 @@
     <title>@yield('title') - Admin - Company Revenue</title>
     <link rel="stylesheet" type="text/css" href="{{ asset('css/style.css') }}">
     <link rel="stylesheet" href="https://kit-pro.fontawesome.com/releases/v5.12.1/css/pro.min.css">
+    <!-- Font Awesome -->
+    <script src="https://kit.fontawesome.com/d70c32c211.js" crossorigin="anonymous"></script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- Thêm CSS cho dropdown -->
@@ -139,16 +141,21 @@
                 <header class="bg-white shadow p-4">
                     <span class="font-semibold text-lg">@yield('title')</span>
                 </header>
-                <div class="flex-grow container mx-auto p-4">
+                <div class="">
                     @if (session('success'))
                         <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
                             {{ session('success') }}
                         </div>
                     @endif
+                    @if (session('error'))
+                        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+                            {{ session('error') }}
+                        </div>
+                    @endif
                     @yield('content')
                     @yield('scripts')
                 </div>
-                <footer class="bg-gray-800 text-white text-center p-4">
+                <footer class="bg-gray-800 text-white text-center p-4 mt-auto">
                     <p>© 2025 Company Revenue. All rights reserved.</p>
                 </footer>
             </main>

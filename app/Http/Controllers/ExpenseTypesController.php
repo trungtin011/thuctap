@@ -9,16 +9,24 @@ use Illuminate\Support\Facades\Validator;
 class ExpenseTypesController extends Controller
 {
     /**
-     * Display a listing of the expense types.
+     * Hiển thị danh sách các loại chi phí.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $expenseTypes = ExpenseType::paginate(10);
+        $query = ExpenseType::query();
+
+        // Chức năng tìm kiếm
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        $expenseTypes = $query->paginate(10); // Số mục hiển thị trên mỗi trang
         return view('admin.expense-types.index', compact('expenseTypes'));
     }
 
+
     /**
-     * Show the form for creating a new expense type.
+     * Hiển thị form tạo loại chi phí mới.
      */
     public function create()
     {
@@ -26,7 +34,7 @@ class ExpenseTypesController extends Controller
     }
 
     /**
-     * Store a newly created expense type in storage.
+     * Lưu loại chi phí mới vào cơ sở dữ liệu.
      */
     public function store(Request $request)
     {
@@ -42,11 +50,11 @@ class ExpenseTypesController extends Controller
             'name' => $request->name,
         ]);
 
-        return redirect()->route('expense-types.index')->with('success', 'Expense type created successfully');
+        return redirect()->route('expense-types.index')->with('success', 'Tạo loại chi phí thành công');
     }
 
     /**
-     * Show the form for editing the specified expense type.
+     * Hiển thị form sửa loại chi phí.
      */
     public function edit(ExpenseType $expenseType)
     {
@@ -54,7 +62,7 @@ class ExpenseTypesController extends Controller
     }
 
     /**
-     * Update the specified expense type in storage.
+     * Cập nhật loại chi phí.
      */
     public function update(Request $request, ExpenseType $expenseType)
     {
@@ -70,15 +78,15 @@ class ExpenseTypesController extends Controller
             'name' => $request->name,
         ]);
 
-        return redirect()->route('expense-types.index')->with('success', 'Expense type updated successfully');
+        return redirect()->route('expense-types.index')->with('success', 'Cập nhật loại chi phí thành công');
     }
 
     /**
-     * Remove the specified expense type from storage.
+     * Xóa loại chi phí.
      */
     public function destroy(ExpenseType $expenseType)
     {
         $expenseType->delete();
-        return redirect()->route('expense-types.index')->with('success', 'Expense type deleted successfully');
+        return redirect()->route('expense-types.index')->with('success', 'Xóa loại chi phí thành công');
     }
 }
