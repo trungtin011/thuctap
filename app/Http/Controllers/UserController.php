@@ -11,11 +11,35 @@ use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
     // Danh sách user
-    public function index()
+    public function index(Request $request)
     {
-        $users = Employee::with('department', 'role')->paginate(10);
-        return view('admin.users.index', compact('users'));
+        $query = Employee::with('department', 'role');
+
+        // Lọc theo phòng ban
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
+        // Lọc theo vai trò
+        if ($request->filled('role_id')) {
+            $query->where('role_id', $request->role_id);
+        }
+
+        // Tìm kiếm
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                    ->orWhere('email', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $users = $query->paginate(10);
+        $departments = \App\Models\Department::all();
+        $roles = \App\Models\Role::all(); // <== Bổ sung biến này để truyền vào view
+
+        return view('admin.users.index', compact('users', 'departments', 'roles'));
     }
+
 
     // Form tạo user
     public function create()
