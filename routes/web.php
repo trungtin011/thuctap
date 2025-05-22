@@ -11,6 +11,8 @@ use App\Http\Controllers\ExpenseTypesController;
 use App\Http\Controllers\Manager\FinancialApprovalController;
 use App\Http\Controllers\Admin\FinancialAdminController;
 
+use App\Http\Controllers\Admin\RevenueController;
+
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -18,7 +20,16 @@ Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('regi
 Route::post('/register', [AuthController::class, 'register']);
 
 Route::middleware(['check.role:admin,manager'])->group(function () {
-    
+    Route::get('dashboard', [FinancialAdminController::class, 'totalRevenue'])->name('dashboard');
+
+    // Route trả view cho biểu đồ
+    Route::get('/revenue-chart', function () {
+        return view('admin.financial.revenue-chart');
+    })->name('revenue.chart');
+
+    // Route API để lấy dữ liệu JSON
+    Route::get('/api/revenue', [RevenueController::class, 'getRevenueData']);
+
     // Đúng (phù hợp với method trong controller):
     Route::prefix('admin/financial')->name('admin.financial.')->group(function () {
         // Route hiển thị danh sách bản ghi tài chính
