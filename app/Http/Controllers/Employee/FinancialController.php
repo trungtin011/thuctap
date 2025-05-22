@@ -82,20 +82,28 @@ class FinancialController extends Controller
                 },
             ],
             'platform_id' => 'required|exists:platforms,id',
-            'revenue' => 'required|numeric|min:0',
+            // Thay đổi: revenue_sources là mảng các nguồn doanh thu
+            'revenue_sources' => 'required|array|min:1',
+            'revenue_sources.*.source_name' => 'required|string|max:100',
+            'revenue_sources.*.amount' => 'required|numeric|min:0',
             'record_date' => 'required|date',
             'record_time' => 'required',
             'note' => 'nullable|string',
+            // Chi phí: nhiều nguồn
             'expenses' => 'nullable|array',
             'expenses.*.expense_type_id' => 'required|exists:expense_types,id',
+            'expenses.*.source_name' => 'required|string|max:100',
             'expenses.*.amount' => 'required|numeric|min:0',
             'expenses.*.description' => 'nullable|string',
         ]);
 
+        // Tổng doanh thu từ các nguồn
+        $totalRevenue = collect($request->revenue_sources)->sum('amount');
+
         $financialRecord = FinancialRecord::create([
             'department_id' => $request->department_id,
             'platform_id' => $request->platform_id,
-            'revenue' => $request->revenue,
+            'revenue' => $totalRevenue,
             'record_date' => $request->record_date,
             'record_time' => $request->record_time,
             'note' => $request->note,
@@ -103,6 +111,10 @@ class FinancialController extends Controller
             'submitted_by' => Auth::id(),
         ]);
 
+        // Lưu từng nguồn doanh thu (nếu muốn lưu chi tiết, cần tạo bảng revenue_sources)
+        // Nếu chỉ tổng hợp thì bỏ qua
+
+        // Lưu chi phí từng nguồn
         if ($request->has('expenses')) {
             foreach ($request->expenses as $expense) {
                 Expense::create([
@@ -110,6 +122,8 @@ class FinancialController extends Controller
                     'expense_type_id' => $expense['expense_type_id'],
                     'amount' => $expense['amount'],
                     'description' => $expense['description'],
+                    // Lưu tên nguồn vào description nếu chưa có trường riêng
+                    // 'source_name' => $expense['source_name'],
                 ]);
             }
         }
@@ -166,29 +180,34 @@ class FinancialController extends Controller
                 },
             ],
             'platform_id' => 'required|exists:platforms,id',
-            'revenue' => 'required|numeric|min:0',
+            'revenue_sources' => 'required|array|min:1',
+            'revenue_sources.*.source_name' => 'required|string|max:100',
+            'revenue_sources.*.amount' => 'required|numeric|min:0',
             'record_date' => 'required|date',
             'record_time' => 'required',
             'note' => 'nullable|string',
             'expenses' => 'nullable|array',
             'expenses.*.expense_type_id' => 'required|exists:expense_types,id',
+            'expenses.*.source_name' => 'required|string|max:100',
             'expenses.*.amount' => 'required|numeric|min:0',
             'expenses.*.description' => 'nullable|string',
         ]);
 
+        $totalRevenue = collect($request->revenue_sources)->sum('amount');
+
         $financialRecord->update([
             'department_id' => $request->department_id,
             'platform_id' => $request->platform_id,
-            'revenue' => $request->revenue,
+            'revenue' => $totalRevenue,
             'record_date' => $request->record_date,
             'record_time' => $request->record_time,
             'note' => $request->note,
         ]);
 
-        // Delete existing expenses
+        // Xóa chi phí cũ
         $financialRecord->expenses()->delete();
 
-        // Create new expenses
+        // Lưu chi phí mới
         if ($request->has('expenses')) {
             foreach ($request->expenses as $expense) {
                 Expense::create([
@@ -196,6 +215,7 @@ class FinancialController extends Controller
                     'expense_type_id' => $expense['expense_type_id'],
                     'amount' => $expense['amount'],
                     'description' => $expense['description'],
+                    // 'source_name' => $expense['source_name'],
                 ]);
             }
         }

@@ -69,6 +69,8 @@
                                 <th scope="col">ROAS</th>
                                 <th scope="col">Trạng thái</th>
                                 <th scope="col">Ngày ghi nhận</th>
+                                <th scope="col">Nguồn doanh thu</th>
+                                <th scope="col">Nguồn chi phí</th>
                                 <th scope="col">Hành động</th>
                             </tr>
                         </thead>
@@ -77,12 +79,28 @@
                                 <tr data-id="{{ $record->id }}" data-platform-id="{{ $record->platform_id }}"
                                     data-revenue="{{ $record->revenue }}" data-record-date="{{ $record->record_date }}"
                                     data-record-time="{{ $record->record_time }}" data-note="{{ $record->note }}"
-                                    data-expenses="{{ json_encode($record->expenses) }}">
+                                    data-expenses="{{ json_encode($record->expenses) }}"
+                                    data-revenue-sources="{{ json_encode($record->revenue_sources ?? []) }}">
                                     <td>{{ $record->id }}</td>
                                     <td>{{ $record->department->name }}</td>
                                     <td>{{ $record->platform->name }}</td>
                                     <td>{{ number_format($record->revenue, 2) }}</td>
-                                    <td>{{ number_format($record->expenses->sum('amount'), 2) }}</td>
+                                    <td>
+                                        {{-- Hiển thị nguồn doanh thu --}}
+                                        @if(isset($record->revenue_sources))
+                                            @foreach($record->revenue_sources as $src)
+                                                <div>{{ $src['source_name'] }}: {{ number_format($src['amount'], 2) }}</div>
+                                            @endforeach
+                                        @else
+                                            <div>N/A</div>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        {{-- Hiển thị nguồn chi phí --}}
+                                        @foreach($record->expenses as $exp)
+                                            <div>{{ $exp->description ?? 'N/A' }}: {{ number_format($exp->amount, 2) }}</div>
+                                        @endforeach
+                                    </td>
                                     <td>{{ $record->roas ? number_format($record->roas, 2) : 'N/A' }}</td>
                                     <td>
                                         @switch($record->status)
@@ -113,10 +131,13 @@
                                                 title="Sửa" data-bs-toggle="modal" data-bs-target="#editFinancialModal">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-danger delete-record"
-                                                data-id="{{ $record->id }}" title="Xóa">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
+                                            <form action="{{ route('employee.financial.destroy', $record->id) }}" method="POST" style="display:inline;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Xóa" onclick="return confirm('Bạn có chắc chắn muốn xóa bản ghi này?')">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
                                         @endif
                                     </td>
                                 </tr>
@@ -181,11 +202,29 @@
                             <div class="invalid-feedback" id="note_error"></div>
                         </div>
 
+                        <h6 class="mb-3">Nguồn Doanh Thu</h6>
+                        <div id="revenue-source-container">
+                            <div class="revenue-source-row mb-3 p-3 border rounded">
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Tên nguồn</label>
+                                        <input type="text" name="revenue_sources[0][source_name]" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label">Số tiền</label>
+                                        <input type="number" name="revenue_sources[0][amount]" class="form-control" step="0.01" min="0" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary mb-3"
+                            onclick="addRevenueSourceRow()">Thêm nguồn doanh thu</button>
+
                         <h6 class="mb-3">Chi phí</h6>
                         <div id="expense-container">
                             <div class="expense-row mb-3 p-3 border rounded">
                                 <div class="row">
-                                    <div class="col-md-4 mb-2">
+                                    <div class="col-md-3 mb-2">
                                         <label class="form-label">Loại chi phí</label>
                                         <select name="expenses[0][expense_type_id]" class="form-select" required>
                                             <option value="">Chọn loại chi phí</option>
@@ -193,18 +232,19 @@
                                                 <option value="{{ $expenseType->id }}">{{ $expenseType->name }}</option>
                                             @endforeach
                                         </select>
-                                        <div class="invalid-feedback" id="expenses_0_expense_type_id_error"></div>
                                     </div>
-                                    <div class="col-md-4 mb-2">
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label">Tên nguồn</label>
+                                        <input type="text" name="expenses[0][source_name]" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
                                         <label class="form-label">Số tiền</label>
                                         <input type="number" name="expenses[0][amount]" class="form-control"
                                             step="0.01" required>
-                                        <div class="invalid-feedback" id="expenses_0_amount_error"></div>
                                     </div>
-                                    <div class="col-md-4 mb-2">
+                                    <div class="col-md-3 mb-2">
                                         <label class="form-label">Mô tả</label>
                                         <input type="text" name="expenses[0][description]" class="form-control">
-                                        <div class="invalid-feedback" id="expenses_0_description_error"></div>
                                     </div>
                                 </div>
                             </div>
@@ -300,7 +340,28 @@
 @section('scripts')
     <script>
         let expenseIndex = 1;
+        let revenueSourceIndex = 1;
         let editExpenseIndex = 0;
+
+        function addRevenueSourceRow() {
+            const container = document.getElementById('revenue-source-container');
+            const index = revenueSourceIndex++;
+            const newRow = document.createElement('div');
+            newRow.className = 'revenue-source-row mb-3 p-3 border rounded';
+            newRow.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label">Tên nguồn</label>
+                        <input type="text" name="revenue_sources[${index}][source_name]" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label">Số tiền</label>
+                        <input type="number" name="revenue_sources[${index}][amount]" class="form-control" step="0.01" min="0" required>
+                    </div>
+                </div>
+            `;
+            container.appendChild(newRow);
+        }
 
         function addExpenseRow(containerId) {
             const container = document.getElementById(containerId);
@@ -310,7 +371,7 @@
             newRow.className = 'expense-row mb-3 p-3 border rounded';
             newRow.innerHTML = `
             <div class="row">
-                <div class="col-md-4 mb-2">
+                <div class="col-md-3 mb-2">
                     <label class="form-label">Loại chi phí</label>
                     <select name="expenses[${index}][expense_type_id]" class="form-select" required>
                         <option value="">Chọn loại chi phí</option>
@@ -318,17 +379,18 @@
                             <option value="{{ $expenseType->id }}">{{ $expenseType->name }}</option>
                         @endforeach
                     </select>
-                    <div class="invalid-feedback" id="${prefix}expenses_${index}_expense_type_id_error"></div>
-                </div>
-                <div class="col-md-4 mb-2">
-                    <label class="form-label">Số tiền</label>
-                    <input type="number" name="expenses[${index}][amount]" class="form-control" step="0.01" required>
-                    <div class="invalid-feedback" id="${prefix}expenses_${index}_amount_error"></div>
                 </div>
                 <div class="col-md-3 mb-2">
+                    <label class="form-label">Tên nguồn</label>
+                    <input type="text" name="expenses[${index}][source_name]" class="form-control" required>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label class="form-label">Số tiền</label>
+                    <input type="number" name="expenses[${index}][amount]" class="form-control" step="0.01" required>
+                </div>
+                <div class="col-md-2 mb-2">
                     <label class="form-label">Mô tả</label>
                     <input type="text" name="expenses[${index}][description]" class="form-control">
-                    <div class="invalid-feedback" id="${prefix}expenses_${index}_description_error"></div>
                 </div>
                 <div class="col-md-1 mb-2 d-flex align-items-end">
                     <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.expense-row').remove()">Xóa</button>

@@ -3,6 +3,49 @@
 @section('content')
     <div class="bg-gray-100 flex-1 p-6">
         <!-- Báo Cáo Tổng Quan -->
+        {{-- XÓA PHẦN FORM MỤC TIÊU DOANH THU NĂM Ở ĐÂY --}}
+        {{-- <div class="mb-6">
+            <form method="POST" action="{{ route('admin.financial.set_goal') }}" class="flex items-center gap-4">
+                @csrf
+                <label for="year_goal" class="font-bold">Mục tiêu doanh thu năm:</label>
+                <input type="number" name="year_goal" id="year_goal" value="{{ $year_goal ?? '' }}" class="form-control"
+                    style="width:180px;" min="0" required>
+                <button type="submit" class="btn btn-primary">Lưu mục tiêu</button>
+            </form>
+            @if(isset($year_goal) && $year_goal > 0)
+                <div class="mt-2">
+                    <span class="font-bold text-green-700">
+                        Đã hoàn thành {{ round(($totalRevenue / $year_goal) * 100, 2) }}% mục tiêu năm {{ date('Y') }}.
+                    </span>
+                    <span class="ml-2 text-gray-600">
+                        Còn {{ number_format($year_goal - $totalRevenue, 2) }} VNĐ để đạt mục tiêu.
+                    </span>
+                </div>
+            @endif
+        </div> --}}
+        <div class="mb-6">
+            @php
+                // So sánh doanh thu tháng này với tháng trước
+                $currentMonth = \Carbon\Carbon::now()->month;
+                $lastMonth = \Carbon\Carbon::now()->subMonth()->month;
+                $currentMonthRevenue = $records->where('record_date', '>=', \Carbon\Carbon::now()->startOfMonth()->toDateString())->sum('revenue');
+                $lastMonthRevenue = $records->whereBetween('record_date', [
+                    \Carbon\Carbon::now()->subMonth()->startOfMonth()->toDateString(),
+                    \Carbon\Carbon::now()->subMonth()->endOfMonth()->toDateString()
+                ])->sum('revenue');
+                $percentChange = $lastMonthRevenue > 0 ? (($currentMonthRevenue - $lastMonthRevenue) / $lastMonthRevenue) * 100 : 0;
+            @endphp
+            <div>
+                <span class="font-bold">So sánh doanh thu tháng này với tháng trước:</span>
+                <span class="{{ $percentChange >= 0 ? 'text-green-600' : 'text-red-600' }}">
+                    {{ number_format($percentChange, 2) }}%
+                </span>
+                <span>
+                    (Tháng này: {{ number_format($currentMonthRevenue, 2) }} VNĐ, Tháng trước: {{ number_format($lastMonthRevenue, 2) }} VNĐ)
+                </span>
+            </div>
+        </div>
+
         <div class="grid grid-cols-4 gap-6 xl:grid-cols-1">
             <!-- Tổng doanh thu -->
             <div class="report-card">

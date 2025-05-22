@@ -118,7 +118,8 @@
                     <h3 class="text-base font-semibold mb-3 flex items-center">
                         <i class="fas fa-chart-line mr-2"></i> Company Revenue
                     </h3>
-                    <p class="text-xs">Giải pháp tài chính và phân tích dữ liệu tiên tiến cho doanh nghiệp hiện đại.</p>
+                    <p class="text-xs">Giải pháp tài chính và phân tích dữ liệu tiên tiến cho doanh nghiệp hiện đại.
+                    </p>
                 </div>
                 <!-- Quick Links -->
                 <div>
@@ -126,15 +127,21 @@
                     <ul class="space-y-1">
                         <li><a href="{{ route('welcome') }}" class="footer-link text-xs hover:text-yellow-100">Trang
                                 chủ</a></li>
-                        <li><a href="#about" class="footer-link text-xs hover:text-yellow-100">Giới thiệu</a></li>
-                        <li><a href="#services" class="footer-link text-xs hover:text-yellow-100">Dịch vụ</a></li>
-                        <li><a href="#contact" class="footer-link text-xs hover:text-yellow-100">Liên hệ</a></li>
+                        <li><a href="{{ route('welcome') }}" class="footer-link text-xs hover:text-yellow-100">Trang
+                                chủ</a></li>
+                        <li><a href="#about" class="footer-link text-xs hover:text-yellow-100">Giới thiệu</a>
+                        </li>
+                        <li><a href="#services" class="footer-link text-xs hover:text-yellow-100">Dịch vụ</a>
+                        </li>
+                        <li><a href="#contact" class="footer-link text-xs hover:text-yellow-100">Liên hệ</a>
+                        </li>
                     </ul>
                 </div>
                 <!-- Contact Info -->
                 <div>
                     <h3 class="text-base font-semibold mb-3">Liên hệ</h3>
-                    <p class="text-xs"><i class="fas fa-map-marker-alt mr-2"></i> 123 Đường Doanh Thu, TP.HCM, VN</p>
+                    <p class="text-xs"><i class="fas fa-map-marker-alt mr-2"></i> 123 Đường Doanh Thu, TP.HCM, VN
+                    </p>
                     <p class="text-xs"><i class="fas fa-phone-alt mr-2"></i> +84 123 456 789</p>
                     <p class="text-xs"><i class="fas fa-envelope mr-2"></i> contact@companyrevenue.vn</p>
                 </div>
@@ -155,8 +162,20 @@
                         <button type="submit"
                             class="bg-indigo-600 p-1.5 rounded-r-md text-white hover:bg-indigo-500"><i
                                 class="fas fa-paper-plane"></i></button>
-                    </form>
+                        <a href="#facebook" class="text-white hover:text-yellow-100"><i
+                                class="fab fa-facebook-f text-base"></i></a>
+                        <a href="#twitter" class="text-white hover:text-yellow-100"><i
+                                class="fab fa-twitter text-base"></i></a>
+                        <a href="#linkedin" class="text-white hover:text-yellow-100"><i
+                                class="fab fa-linkedin-in text-base"></i></a>
                 </div>
+                <form class="flex">
+                    <input type="email" placeholder="Nhập email"
+                        class="w-full p-1.5 rounded-l-md text-gray-800 text-xs focus:outline-none">
+                    <button type="submit" class="bg-indigo-600 p-1.5 rounded-r-md text-white hover:bg-indigo-500">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
             </div>
             <div class="border-t border-indigo-800 mt-6 pt-3 text-center">
                 <p class="text-xs">© 2025 Company Revenue. All rights reserved.</p>
@@ -207,6 +226,10 @@
         }
 
         function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
             window.scrollTo({
                 top: 0,
                 behavior: 'smooth'

@@ -54,6 +54,14 @@
                             </i>
                             Tổng doanh thu
                         </a>
+                        <!-- Mục tiêu doanh thu -->
+                        <a href="{{ route('admin.targets.create') }}"
+                            class="block px-3 py-2 rounded hover:bg-indigo-800 font-semibold text-green-300">
+                            <i class="mr-2">
+                                <span class="fas fa-bullseye"></span>
+                            </i>
+                            Mục tiêu doanh thu
+                        </a>
                         <!-- Revenue Analysis Link -->
                         <a href="{{ route('revenue.chart') }}"
                             class="block px-3 py-2 rounded hover:bg-indigo-800 font-semibold text-yellow-300 transition duration-200">
@@ -62,7 +70,6 @@
                             </i>
                             Phân tích doanh thu
                         </a>
-
                         <!-- Management Dropdown -->
                         <div>
                             <button
