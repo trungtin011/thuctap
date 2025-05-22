@@ -10,6 +10,7 @@ use App\Http\Controllers\Employee\FinancialController;
 use App\Http\Controllers\ExpenseTypesController;
 use App\Http\Controllers\Manager\FinancialApprovalController;
 use App\Http\Controllers\Admin\FinancialAdminController;
+use App\Http\Controllers\Admin\FinancialTargetController;
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -73,6 +74,16 @@ Route::middleware(['check.role:admin'])->group(function () {
         // Route hiển thị tổng doanh thu và biểu đồ
         Route::get('/total-revenue', [FinancialAdminController::class, 'totalRevenue'])->name('total_revenue');
     });
+
+    // Thêm route cho mục tiêu doanh thu năm (admin)
+    Route::post('/admin/financial/set-goal', [\App\Http\Controllers\Admin\FinancialAdminController::class, 'setGoal'])->name('admin.financial.set_goal');
+});
+
+// Mục tiêu doanh thu (admin)
+Route::prefix('admin/targets')->name('admin.targets.')->middleware('auth')->group(function () {
+    Route::get('/create', [FinancialTargetController::class, 'create'])->name('create');
+    Route::post('/store', [FinancialTargetController::class, 'store'])->name('store');
+    Route::delete('/{id}', [FinancialTargetController::class, 'destroy'])->name('destroy');
 });
 
 Route::prefix('employee/financial')->middleware('auth')->group(function () {

@@ -67,6 +67,18 @@ class FinancialAdminController extends Controller
         return view('admin.financial.history', compact('financialRecords'));
     }
 
+    // Thêm phương thức này vào controller
+    public function setGoal(Request $request)
+    {
+        $request->validate([
+            'year_goal' => 'required|numeric|min:0'
+        ]);
+        // Lưu mục tiêu vào cache hoặc file hoặc bảng cấu hình (ở đây dùng cache cho đơn giản)
+        cache(['year_goal_' . date('Y') => $request->year_goal], now()->addYear());
+
+        return redirect()->back()->with('success', 'Đã lưu mục tiêu doanh thu năm!');
+    }
+
     public function totalRevenue(Request $request)
     {
         // Lấy các tham số từ request
@@ -203,6 +215,9 @@ class FinancialAdminController extends Controller
         $approved_count = FinancialRecord::where('status', 'admin_approved')->count();
         $not_approved_count = FinancialRecord::where('status', '!=', 'admin_approved')->count();
 
+        // Lấy mục tiêu doanh thu năm từ cache (hoặc DB nếu bạn lưu ở DB)
+        $year_goal = cache('year_goal_' . date('Y'));
+
         // Nếu là yêu cầu AJAX, trả về JSON
         if ($request->ajax()) {
             return response()->json([
@@ -234,7 +249,9 @@ class FinancialAdminController extends Controller
             'expenseData',
             'approved_count',
             'not_approved_count',
-            'platforms'
+            'platforms',
+            'year_goal',
+            'records'
         ));
     }
 }
