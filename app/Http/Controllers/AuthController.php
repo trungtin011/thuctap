@@ -78,18 +78,21 @@ class AuthController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        // Lấy phòng ban mặc định (phòng ban đầu tiên)
-        $defaultDepartment = \App\Models\Department::first();
+        Log::info('Register attempt', ['email' => $request->email]);
 
-        // Luôn lấy vai trò có level = 'employee' của phòng ban đó
+        $defaultDepartment = \App\Models\Department::first();
+        Log::info('Default department', ['department' => $defaultDepartment]);
+
         $defaultRole = null;
         if ($defaultDepartment) {
             $defaultRole = \App\Models\Role::where('level', 'employee')
                 ->where('department_id', $defaultDepartment->id)
                 ->first();
+            Log::info('Default role', ['role' => $defaultRole]);
         }
 
         if (!$defaultDepartment || !$defaultRole) {
+            Log::error('Registration failed: No default department or role');
             return back()->withErrors(['register' => 'Không tìm thấy phòng ban hoặc vai trò mặc định. Vui lòng liên hệ quản trị viên.'])->withInput();
         }
 
@@ -103,6 +106,7 @@ class AuthController extends Controller
 
         \Illuminate\Support\Facades\Auth::login($employee);
 
+        Log::info('Registration successful', ['email' => $request->email]);
         return redirect()->route('welcome')->with('success', 'Đăng ký thành công!');
     }
 }

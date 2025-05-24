@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
-use App\Http\Controllers\PlatformController;
+use App\Http\Controllers\Admin\PlatformController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\Employee\FinancialController;
 use App\Http\Controllers\ExpenseTypesController;
@@ -66,10 +66,28 @@ Route::middleware(['check.role:admin'])->group(function () {
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 
+    // Mục tiêu doanh thu (admin)
+    Route::prefix('admin/targets')->name('admin.targets.')->group(function () {
+        Route::get('/create', [FinancialTargetController::class, 'create'])->name('create');
+        Route::post('/store', [FinancialTargetController::class, 'store'])->name('store');
+        Route::delete('/{id}', [FinancialTargetController::class, 'destroy'])->name('destroy');
+    });
+
     Route::resource('roles', RoleController::class)->except(['show']);
     Route::resource('departments', DepartmentController::class)->except(['show']);
     Route::resource('platforms', PlatformController::class)->except(['show']);
     Route::resource('expense-types', ExpenseTypesController::class)->except(['show']);
+
+    // Platform
+    Route::prefix('platforms')->group(function () {
+        Route::get('/', [PlatformController::class, 'index'])->name('platforms.index');
+        Route::get('/create', [PlatformController::class, 'create'])->name('platforms.create');
+        Route::post('/', [PlatformController::class, 'store'])->name('platforms.store');
+        Route::get('/{platform}/edit', [PlatformController::class, 'edit'])->name('platforms.edit');
+        Route::put('/{platform}', [PlatformController::class, 'update'])->name('platforms.update');
+        Route::delete('/{platform}', [PlatformController::class, 'destroy'])->name('platforms.destroy');
+        Route::delete('/{platform}/metrics/{metric}', [PlatformController::class, 'destroyMetric'])->name('platforms.metrics.destroy');
+    });
 
     // Đúng (phù hợp với method trong controller):
     Route::prefix('admin/financial')->name('admin.financial.')->group(function () {
@@ -87,23 +105,19 @@ Route::middleware(['check.role:admin'])->group(function () {
     });
 
     // Thêm route cho mục tiêu doanh thu năm (admin)
-    Route::post('/admin/financial/set-goal', [\App\Http\Controllers\Admin\FinancialAdminController::class, 'setGoal'])->name('admin.financial.set_goal');
+    Route::post('/admin/financial/set-goal', [FinancialAdminController::class, 'setGoal'])->name('admin.financial.set_goal');
 });
 
-// Mục tiêu doanh thu (admin)
-Route::prefix('admin/targets')->name('admin.targets.')->middleware('auth')->group(function () {
-    Route::get('/create', [FinancialTargetController::class, 'create'])->name('create');
-    Route::post('/store', [FinancialTargetController::class, 'store'])->name('store');
-    Route::delete('/{id}', [FinancialTargetController::class, 'destroy'])->name('destroy');
-});
-
-Route::prefix('employee/financial')->middleware('auth')->group(function () {
+Route::prefix('employee/financial')->group(function () {
     Route::get('/', [FinancialController::class, 'index'])->name('employee.financial.index');
     Route::get('/create', [FinancialController::class, 'create'])->name('employee.financial.create');
     Route::post('/store', [FinancialController::class, 'store'])->name('employee.financial.store');
     Route::get('/{id}/edit', [FinancialController::class, 'edit'])->name('employee.financial.edit');
     Route::put('/{id}', [FinancialController::class, 'update'])->name('employee.financial.update');
     Route::delete('/{id}', [FinancialController::class, 'destroy'])->name('employee.financial.destroy');
+    Route::get('/get-metrics/{platformId}', [FinancialController::class, 'getMetrics'])->name('employee.financial.get-metrics');
+    Route::get('/get-metric-values/{metricId}', [FinancialController::class, 'getMetricValues'])->name('employee.financial.get-metric-values');
+    Route::get('/get-metric-values-for-record/{recordId}', [FinancialController::class, 'getMetricValuesForRecord'])->name('employee.financial.getMetricValuesForRecord');
 });
 
 

@@ -1,15 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', 'Quản lý nền tảng')
+@section('title', 'Danh sách nền tảng')
 
 @section('content')
-    <div class="flex items-center mt-4" style="background-color: #f1f1f1; padding: 20px 16px;">
-        <h2 class="text-md underline">
-            Danh sách nền tảng
-        </h2>
-    </div>
-
     <div class="p-4 mx-auto">
+        <h2 class="text-2xl font-bold mb-6">Danh sách nền tảng</h2>
+
         <div class="flex justify-between mb-4">
             <div class="flex justify-between">
                 <a href="{{ route('platforms.create') }}" class="inline-block hover:text-blue-700">
@@ -33,9 +29,10 @@
                     <div class="flex items-center">
                         @if (request()->get('start_date') || request()->get('end_date'))
                             <a href="{{ route('platforms.index') }}"
-                                class="bg-red-600 text-white px-4 py-2 hover:bg-red-700 transition duration-300 mr-2"><i class="fa-solid fa-rotate"></i></a>
+                                class="bg-red-600 text-white px-4 py-2 hover:bg-red-700 transition duration-300 mr-2"><i
+                                    class="fa-solid fa-rotate"></i></a>
                         @endif
-                        
+
                         <button type="submit"
                             class="bg-blue-600 text-white px-4 py-2 hover:bg-blue-700 transition duration-300">
                             <i class="fas fa-filter mr-1"></i>
@@ -57,52 +54,49 @@
             </div>
         </div>
 
-        @if (session('success'))
-            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-            <table class="w-full text-sm text-left text-gray-900">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+        <!-- Bảng nền tảng -->
+        <div class="bg-white rounded shadow overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 bg-white text-center">ID</th>
-                        <th class="px-6 py-3 bg-white text-center">Tên nền tảng</th>
-                        <th class="px-6 py-3 bg-white text-center">Ngày tạo</th>
-                        <th class="px-6 py-3 bg-white text-center">Hành động</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên nền
+                            tảng</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chỉ số
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tạo
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động
+                        </th>
                     </tr>
                 </thead>
-                <tbody>
-                    @forelse ($platforms as $platform)
-                        <tr class="border-b bg-white">
-                            <td class="px-6 py-4 text-center">{{ $platform->id }}</td>
-                            <td class="px-6 py-4 text-center">{{ $platform->name }}</td>
-                            <td class="px-6 py-4 text-center">
-                                {{ $platform->created_at ? $platform->created_at->format('d/m/Y H:i') : 'N/A' }}
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach ($platforms as $platform)
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ $platform->name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @foreach ($platform->metrics as $metric)
+                                    <div>{{ $metric->name }} ({{ $metric->unit ?? 'Không có đơn vị' }},
+                                        {{ $metric->data_type }})</div>
+                                @endforeach
                             </td>
-                            <td class="px-6 py-4 text-center">
-                                <a href="{{ route('platforms.edit', $platform->id) }}"
+                            <td class="px-6 py-4 whitespace-nowrap">{{ $platform->created_at->format('d/m/Y H:i') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <a href="{{ route('platforms.edit', $platform) }}"
                                     class="text-blue-600 hover:underline">Sửa</a>
-                                <form action="{{ route('platforms.destroy', $platform->id) }}" method="POST"
-                                    class="inline-block" onsubmit="return confirm('Bạn chắc chắn muốn xóa nền tảng này?');">
+                                <form action="{{ route('platforms.destroy', $platform) }}" method="POST"
+                                    class="inline-block" onsubmit="return confirm('Bạn có chắc muốn xóa?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:underline ml-2">Xóa</button>
+                                    <button type="submit" class="text-red-600 hover:underline">Xóa</button>
                                 </form>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4" class="text-center py-4">Không tìm thấy nền tảng nào.</td>
-                        </tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
             </table>
         </div>
 
-        <div class="mt-4">
-            {{ $platforms->withQueryString()->links() }}
-        </div>
+        <!-- Phân trang -->
+        {{ $platforms->links() }}
     </div>
 @endsection
