@@ -117,7 +117,6 @@ Route::prefix('employee/financial')->group(function () {
     Route::delete('/{id}', [FinancialController::class, 'destroy'])->name('employee.financial.destroy');
     Route::get('/get-metrics/{platformId}', [FinancialController::class, 'getMetrics'])->name('employee.financial.get-metrics');
     Route::get('/get-metric-values/{metricId}', [FinancialController::class, 'getMetricValues'])->name('employee.financial.get-metric-values');
-    Route::get('/get-metric-values-for-record/{recordId}', [FinancialController::class, 'getMetricValuesForRecord'])->name('employee.financial.getMetricValuesForRecord');
 });
 
 

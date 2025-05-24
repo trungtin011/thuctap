@@ -138,7 +138,7 @@
                                         @endswitch
                                     </td>
 
-                                    <td>{{ $record->record_date }}</td>
+                                    <td>{{ date('Y-m-d', strtotime($record->record_date)) }}</td>
 
                                     {{-- Hành động --}}
                                     <td class="text-center">
@@ -508,19 +508,38 @@
                     });
                     metricsContainer.appendChild(metricList);
 
-                    // Tự động tải giá trị hiện có cho modal chỉnh sửa
                     if (isEdit) {
-                        data.metrics.forEach(metric => {
-                            loadMetricValues(metric.id, isEdit, valuesContainerId, metric.data_type, metric
-                                .name, metric.unit);
-                        });
+                        metricValues = [];
+                        const recordId = document.querySelector('#editFinancialForm input[name="record_id"]').value;
+                        Promise.all(data.metrics.map(metric =>
+                                fetch(`/employee/financial/get-metric-values/${metric.id}?record_id=${recordId}`, {
+                                    method: 'GET',
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                    }
+                                })
+                                .then(response => response.json())
+                                .then(data => ({
+                                    metric_id: metric.id,
+                                    name: metric.name,
+                                    unit: metric.unit,
+                                    data_type: metric.data_type,
+                                    values: data.values || []
+                                }))
+                            ))
+                            .then(results => {
+                                metricValues = results;
+                                updateMetricValuesContainer(valuesContainerId, isEdit);
+                            })
+                            .catch(error => {
+                                console.error('Lỗi khi tải giá trị chỉ số:', error);
+                                valuesContainer.innerHTML =
+                                    `<p class="text-danger">Lỗi khi tải giá trị chỉ số: ${error.message}. Vui lòng thử lại.</p>`;
+                            });
                     } else {
                         updateMetricValuesContainer(valuesContainerId, isEdit);
                     }
-                })
-                .then(() => {
-                    // Cập nhật recorded_at sau khi tải chỉ số
-                    updateMetricRecordedAt(isEdit);
                 })
                 .catch(error => {
                     console.error('Lỗi khi tải chỉ số:', error);
@@ -542,8 +561,6 @@
                 return;
             }
 
-            console.log(`Fetching metric values for metric_id ${metricId}, record_id ${recordId}`); // Thêm log
-
             fetch(`/employee/financial/get-metric-values/${metricId}${isEdit && recordId ? '?record_id=' + recordId : ''}`, {
                     method: 'GET',
                     headers: {
@@ -558,8 +575,7 @@
                     return response.json();
                 })
                 .then(data => {
-                    console.log(`Metric values for metric_id ${metricId}:`, data.values); // Thêm log
-                    // Lưu metric value mới vào metricValues
+                    console.log(`Metric values for metric_id ${metricId}:`, data.values);
                     const existingMetric = metricValues.find(m => m.metric_id === metricId);
                     if (!existingMetric) {
                         metricValues.push({
@@ -572,7 +588,6 @@
                     } else {
                         existingMetric.values = data.values || [];
                     }
-
                     updateMetricValuesContainer(valuesContainerId, isEdit);
                 })
                 .catch(error => {
@@ -596,53 +611,54 @@
                 metricSection.className = 'mb-3';
                 metricSection.innerHTML = `<h6>${metric.name} (${metric.unit || 'Không có đơn vị'})</h6>`;
 
-                // Hiển thị giá trị hiện có chỉ trong modal chỉnh sửa
                 if (isEdit) {
-                    console.log(`Displaying values for metric ${metric.name}:`, metric.values); // Thêm log
-                    const table = document.createElement('table');
-                    table.className = 'table table-bordered table-sm';
-                    table.innerHTML = `
-                    <thead>
-                        <tr>
-                            <th>Giá trị</th>
-                            <th>Ngày ghi nhận</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${metric.values.length === 0 ? '<tr><td colspan="2" class="text-muted">Chưa có giá trị nào.</td></tr>' : 
-                            metric.values.map(value => `
-                                    <tr>
-                                        <td>${value.value}</td>
-                                        <td>${value.recorded_at}</td>
-                                    </tr>
-                                `).join('')}
-                    </tbody>
-                `;
-                    metricSection.appendChild(table);
+                    console.log(`Displaying values for metric ${metric.name}:`, metric.values);
+                    if (metric.values.length === 0) {
+                        metricSection.innerHTML +=
+                            '<p class="text-muted">Chưa có giá trị nào. Vui lòng nhập giá trị mới.</p>';
+                    } else {
+                        const table = document.createElement('table');
+                        table.className = 'table table-bordered table-sm';
+                        table.innerHTML = `
+                            <thead>
+                                <tr>
+                                    <th>Giá trị</th>
+                                    <th>Ngày ghi nhận</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${metric.values.map(value => `
+                                        <tr>
+                                            <td>${value.value}</td>
+                                            <td>${value.recorded_at}</td>
+                                        </tr>
+                                    `).join('')}
+                            </tbody>
+                        `;
+                        metricSection.appendChild(table);
+                    }
                 }
 
-                // Thêm ô nhập giá trị mới
                 const inputGroup = document.createElement('div');
                 inputGroup.className = 'mt-2';
                 inputGroup.innerHTML = `
-                <label class="form-label">Thêm giá trị mới</label>
-                <div class="input-group">
-                    <input type="${metric.data_type === 'string' ? 'text' : 'number'}" 
-                           name="metric_values[${metricValueIndex}][value]" 
-                           class="form-control" 
-                           placeholder="Nhập giá trị" 
-                           ${metric.data_type === 'float' ? 'step="0.01"' : ''} 
-                           required>
-                    <input type="hidden" name="metric_values[${metricValueIndex}][metric_id]" value="${metric.metric_id}">
-                    <input type="hidden" name="metric_values[${metricValueIndex}][recorded_at]" class="metric-recorded-at">
-                </div>
-            `;
+                    <label class="form-label">Thêm giá trị mới</label>
+                    <div class="input-group">
+                        <input type="${metric.data_type === 'string' ? 'text' : 'number'}" 
+                               name="metric_values[${metricValueIndex}][value]" 
+                               class="form-control" 
+                               placeholder="Nhập giá trị" 
+                               ${metric.data_type === 'float' ? 'step="0.01"' : ''} 
+                               required>
+                        <input type="hidden" name="metric_values[${metricValueIndex}][metric_id]" value="${metric.metric_id}">
+                        <input type="hidden" name="metric_values[${metricValueIndex}][recorded_at]" class="metric-recorded-at">
+                    </div>
+                `;
                 metricSection.appendChild(inputGroup);
                 metricValueIndex++;
                 valuesContainer.appendChild(metricSection);
             });
 
-            // Cập nhật recorded_at dựa trên record_date và record_time
             updateMetricRecordedAt(isEdit);
         }
 
@@ -737,12 +753,15 @@
                 form.action = `/employee/financial/${recordId}`;
                 form.querySelector('input[name="record_id"]').value = recordId;
 
-                form.querySelector('select[name="platform_id"]').value = row.getAttribute(
-                    'data-platform-id');
+                const platformId = row.getAttribute('data-platform-id');
+                const platformSelect = form.querySelector('select[name="platform_id"]');
+                platformSelect.value = platformId || '';
+
                 form.querySelector('input[name="record_date"]').value = row.getAttribute(
-                    'data-record-date');
+                    'data-record-date') || '';
                 form.querySelector('input[name="record_time"]').value = row.getAttribute(
-                    'data-record-time');
+                    'data-record-time') || '';
+
                 form.querySelector('textarea[name="note"]').value = JSON.parse(row.getAttribute(
                     'data-note') || '""');
 
@@ -754,20 +773,20 @@
                     const newRow = document.createElement('div');
                     newRow.className = 'revenue-source-row mb-3 p-3 border rounded';
                     newRow.innerHTML = `
-                    <div class="row">
-                        <div class="col-md-5 mb-2">
-                            <label class="form-label">Tên nguồn</label>
-                            <input type="text" name="revenue_sources[${index}][source_name]" class="form-control" value="${source.source_name || ''}" required>
-                        </div>
-                        <div class="col-md-5 mb-2">
-                            <label class="form-label">Số tiền</label>
-                            <input type="number" name="revenue_sources[${index}][amount]" class="form-control" step="0.01" min="0" value="${source.amount || 0}" required>
-                        </div>
-                        <div class="col-md-2 mb-2 d-flex align-items-end">
-                            <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.revenue-source-row').remove()">Xóa</button>
-                        </div>
+                <div class="row">
+                    <div class="col-md-5 mb-2">
+                        <label class="form-label">Tên nguồn</label>
+                        <input type="text" name="revenue_sources[${index}][source_name]" class="form-control" value="${source.source_name || ''}" required>
                     </div>
-                `;
+                    <div class="col-md-5 mb-2">
+                        <label class="form-label">Số tiền</label>
+                        <input type="number" name="revenue_sources[${index}][amount]" class="form-control" step="0.01" min="0" value="${source.amount || 0}" required>
+                    </div>
+                    <div class="col-md-2 mb-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.revenue-source-row').remove()">Xóa</button>
+                    </div>
+                </div>
+            `;
                     revenueSourceContainer.appendChild(newRow);
                     revenueSourceIndex = index + 1;
                 });
@@ -780,39 +799,43 @@
                     const newRow = document.createElement('div');
                     newRow.className = 'expense-row mb-3 p-3 border rounded';
                     newRow.innerHTML = `
-                    <div class="row">
-                        <div class="col-md-3 mb-2">
-                            <label class="form-label">Loại chi phí</label>
-                            <select name="expenses[${index}][expense_type_id]" class="form-select" required>
-                                <option value="">Chọn loại chi phí</option>
-                                @foreach ($expenseTypes as $expenseType)
-                                    <option value="{{ $expenseType->id }}" ${expense.expense_type_id == {{ $expenseType->id }} ? 'selected' : ''}>{{ $expenseType->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <label class="form-label">Số tiền</label>
-                            <input type="number" name="expenses[${index}][amount]" class="form-control" step="0.01" min="0" value="${expense.amount || 0}" required>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <label class="form-label">Mô tả</label>
-                            <input type="text" name="expenses[${index}][description]" class="form-control" value="${expense.description || ''}">
-                        </div>
-                        <div class="col-md-3 mb-2 d-flex align-items-end">
-                            <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.expense-row').remove()">Xóa</button>
-                        </div>
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label">Loại chi phí</label>
+                        <select name="expenses[${index}][expense_type_id]" class="form-select" required>
+                            <option value="">Chọn loại chi phí</option>
+                            @foreach ($expenseTypes as $expenseType)
+                                <option value="{{ $expenseType->id }}" ${expense.expense_type_id == {{ $expenseType->id }} ? 'selected' : ''}>{{ $expenseType->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
-                `;
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label">Số tiền</label>
+                        <input type="number" name="expenses[${index}][amount]" class="form-control" step="0.01" min="0" value="${expense.amount || 0}" required>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label">Mô tả</label>
+                        <input type="text" name="expenses[${index}][description]" class="form-control" value="${expense.description || ''}">
+                    </div>
+                    <div class="col-md-3 mb-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.expense-row').remove()">Xóa</button>
+                    </div>
+                </div>
+            `;
                     expenseContainer.appendChild(newRow);
                     editExpenseIndex = index + 1;
                 });
 
                 const modal = document.getElementById('editFinancialModal');
                 modal.addEventListener('shown.bs.modal', function() {
-                    const platformSelect = form.querySelector('select[name="platform_id"]');
-                    loadMetrics(platformSelect, true);
-                }, {
-                    once: true
+                    if (platformId) {
+                        loadMetrics(platformSelect, true);
+                    } else {
+                        document.getElementById('edit-metrics-container').innerHTML =
+                            '<p class="text-muted">Vui lòng chọn nền tảng để hiển thị các chỉ số.</p>';
+                        document.getElementById('edit-metric-values-container').innerHTML =
+                            '<p class="text-muted">Vui lòng chọn một chỉ số để xem và nhập giá trị.</p>';
+                    }
                 });
             });
         });

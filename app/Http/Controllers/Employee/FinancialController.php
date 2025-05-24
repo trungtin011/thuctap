@@ -285,6 +285,13 @@ class FinancialController extends Controller
         ];
         $note = json_encode($noteData);
 
+        $oldRecordedAt = $financialRecord->record_date->format('Y-m-d') . ' ' . $financialRecord->record_time;
+
+        // Xóa metric_values cũ dựa trên recorded_at
+        MetricValue::whereIn('metric_id', PlatformMetric::where('platform_id', $financialRecord->platform_id)->pluck('id'))
+            ->where('recorded_at', $oldRecordedAt)
+            ->delete();
+
         $financialRecord->update([
             'department_id' => $request->department_id,
             'platform_id' => $request->platform_id,
@@ -306,11 +313,6 @@ class FinancialController extends Controller
                 ]);
             }
         }
-
-        $oldRecordedAt = $financialRecord->record_date . ' ' . $financialRecord->record_time;
-        MetricValue::whereIn('metric_id', PlatformMetric::where('platform_id', $financialRecord->platform_id)->pluck('id'))
-            ->where('recorded_at', $oldRecordedAt)
-            ->delete();
 
         if ($request->has('metric_values')) {
             foreach ($request->metric_values as $metricValue) {
@@ -344,7 +346,7 @@ class FinancialController extends Controller
             abort(403, 'Bạn chỉ có thể xóa bản ghi đang chờ duyệt.');
         }
 
-        $recordedAt = $financialRecord->record_date . ' ' . $financialRecord->record_time;
+        $recordedAt = $financialRecord->record_date->format('Y-m-d') . ' ' . $financialRecord->record_time;
         MetricValue::whereIn('metric_id', PlatformMetric::where('platform_id', $financialRecord->platform_id)->pluck('id'))
             ->where('recorded_at', $recordedAt)
             ->delete();
@@ -376,20 +378,14 @@ class FinancialController extends Controller
 
         if ($request->has('record_id')) {
             $record = FinancialRecord::findOrFail($request->record_id);
-            $query->where('recorded_at', $record->record_date . ' ' . $record->record_time);
+            $recordedAt = $record->record_date->format('Y-m-d') . ' ' . $record->record_time;
+            $query->where('recorded_at', $recordedAt);
+            Log::info('Querying metric values for metric_id: ' . $metricId . ', recorded_at: ' . $recordedAt);
         }
 
         $values = $query->get();
+        Log::info('Metric values returned: ', $values->toArray());
+
         return response()->json(['values' => $values]);
-    }
-
-    public function getMetricValuesForRecord($recordId)
-    {
-        $metricValues = MetricValue::where('financial_record_id', $recordId)
-            ->join('platform_metrics', 'metric_values.metric_id', '=', 'platform_metrics.id')
-            ->select('metric_values.*', 'platform_metrics.name as metric_name', 'platform_metrics.unit as metric_unit')
-            ->get();
-
-        return response()->json(['metricValues' => $metricValues]);
     }
 }
