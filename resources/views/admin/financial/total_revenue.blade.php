@@ -44,6 +44,10 @@
                     (Tháng này: {{ number_format($currentMonthRevenue, 2) }} VNĐ, Tháng trước: {{ number_format($lastMonthRevenue, 2) }} VNĐ)
                 </span>
             </div>
+            <div class="mt-2">
+                <span class="font-bold">Tổng hoa hồng:</span>
+                <span class="text-blue-600">{{ number_format($totalCommission, 2) }} VNĐ</span>
+            </div>
         </div>
 
         <div class="grid grid-cols-4 gap-6 xl:grid-cols-1">

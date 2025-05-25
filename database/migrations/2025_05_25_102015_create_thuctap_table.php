@@ -119,24 +119,19 @@ return new class extends Migration
 
         // Tạo bảng financial_records
         Schema::create('financial_records', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->foreignId('dai_ly_id')->nullable()->constrained('dai_lies')->onDelete('set null');
+            $table->id();
             $table->foreignId('department_id')->constrained()->onDelete('cascade');
             $table->foreignId('platform_id')->constrained()->onDelete('cascade');
-            $table->foreignId('route_id')->nullable()->constrained('routes')->onDelete('set null');
+            $table->foreignId('dai_ly_id')->constrained()->onDelete('cascade');
+            $table->foreignId('office_id')->constrained()->onDelete('cascade');
             $table->decimal('revenue', 15, 2);
-            $table->decimal('commission', 15, 2)->default(0.00)->nullable();
+            $table->decimal('commission', 15, 2)->nullable()->default(0); // Đảm bảo cột commission tồn tại
             $table->date('record_date');
             $table->time('record_time');
             $table->text('note')->nullable();
-            $table->enum('status', ['pending', 'manager_approved', 'admin_approved', 'rejected'])->default('pending');
-            $table->foreignId('submitted_by')->nullable()->constrained('employees')->onDelete('set null');
-            $table->foreignId('manager_approved_by')->nullable()->constrained('employees')->onDelete('set null');
-            $table->foreignId('admin_approved_by')->nullable()->constrained('employees')->onDelete('set null');
-            $table->text('manager_note')->nullable();
-            $table->text('admin_note')->nullable();
+            $table->string('status')->default('pending');
+            $table->foreignId('submitted_by')->constrained('users')->onDelete('cascade');
             $table->timestamps();
-            $table->decimal('roas', 15, 2)->nullable()->comment('ROAS = Revenue / Total Expenses');
         });
 
         // Tạo bảng expenses

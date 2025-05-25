@@ -237,7 +237,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="commission" class="form-label">Hoa hồng (VNĐ)</label>
-                            <input type="number" name="commission" id="commission" class="form-control" min="0" step="1000" value="0">
+                            <input type="number" name="commission" id="commission" class="form-control" min="0" step="100000000" value="0">
                             <div class="invalid-feedback" id="commission_error"></div>
                         </div>
                         <div class="mb-3">
@@ -380,10 +380,10 @@
                             </select>
                             <div class="invalid-feedback" id="edit_office_id_error"></div>
                         </div>
-                        <div class="mb-3">
-                            <label for="edit_commission" class="form-label">Hoa hồng (VNĐ)</label>
-                            <input type="number" name="commission" id="edit_commission" class="form-control" min="0" step="1000" value="0">
-                            <div class="invalid-feedback" id="edit_commission_error"></div>
+                        <!-- Trong resources/views/employee/financial/create.blade.php và edit.blade.php -->
+                        <div class="form-group">
+                            <label for="commission">Hoa hồng</label>
+                            <input type="number" name="commission" id="commission" class="form-control" value="{{ old('commission', isset($financialRecord) ? $financialRecord->commission : '') }}" step="0.01" min="0">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Đại lý</label>

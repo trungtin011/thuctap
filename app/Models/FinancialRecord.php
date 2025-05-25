@@ -15,6 +15,7 @@ class FinancialRecord extends Model
         'record_date',
         'record_time',
         'note',
+        'commission',
         'status',
         'submitted_by',
         'manager_approved_by',

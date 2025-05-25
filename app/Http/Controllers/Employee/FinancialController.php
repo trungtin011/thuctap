@@ -81,6 +81,7 @@ class FinancialController extends Controller
 
             $employee = Auth::user();
 
+            // Trong phương thức store
             $validated = $request->validate([
                 'department_id' => [
                     'required',
@@ -95,41 +96,7 @@ class FinancialController extends Controller
                 'dai_ly_id' => 'required|exists:dai_lies,id',
                 'office_id' => 'required|exists:offices,id',
                 'metric_values' => 'nullable|array',
-                'metric_values.*.metric_id' => [
-                    'required',
-                    'exists:platform_metrics,id',
-                    function ($attribute, $value, $fail) use ($request) {
-                        if (!PlatformMetric::where('id', $value)->where('platform_id', $request->platform_id)->exists()) {
-                            $fail('Chỉ số không thuộc nền tảng đã chọn.');
-                        }
-                    },
-                ],
-                'metric_values.*.value' => [
-                    'required',
-                    function ($attribute, $value, $fail) use ($request) {
-                        $index = explode('.', $attribute)[1];
-                        if (!isset($request->metric_values[$index]['metric_id'])) {
-                            $fail('ID chỉ số không hợp lệ.');
-                            return;
-                        }
-                        $metricId = $request->metric_values[$index]['metric_id'];
-                        $metric = PlatformMetric::find($metricId);
-                        if (!$metric) {
-                            $fail('Chỉ số không tồn tại.');
-                            return;
-                        }
-                        if ($metric->data_type === 'int' && (!is_numeric($value) || floor($value) != $value)) {
-                            $fail('Giá trị phải là số nguyên.');
-                        }
-                        if ($metric->data_type === 'float' && !is_numeric($value)) {
-                            $fail('Giá trị phải là số thực.');
-                        }
-                        if ($metric->data_type === 'string' && !is_string($value)) {
-                            $fail('Giá trị phải là chuỗi.');
-                        }
-                    },
-                ],
-                'metric_values.*.recorded_at' => 'required|date',
+                // ... các quy tắc khác ...
                 'revenue_sources' => 'required|array|min:1',
                 'revenue_sources.*.source_name' => 'required|string|max:100',
                 'revenue_sources.*.amount' => 'required|numeric|min:0',
@@ -140,6 +107,36 @@ class FinancialController extends Controller
                 'expenses.*.expense_type_id' => 'required|exists:expense_types,id',
                 'expenses.*.amount' => 'required|numeric|min:0',
                 'expenses.*.description' => 'nullable|string|max:255',
+                'commission' => 'nullable|numeric|min:0', // Thêm quy tắc xác thực cho commission
+            ]);
+
+            // Trong phương thức update
+            $request->validate([
+                'department_id' => [
+                    'required',
+                    'exists:departments,id',
+                    function ($attribute, $value, $fail) use ($employee) {
+                        if ($value != $employee->department_id) {
+                            $fail('Bạn chỉ có thể nhập dữ liệu cho phòng ban của mình.');
+                        }
+                    },
+                ],
+                'platform_id' => 'required|exists:platforms,id',
+                'dai_ly_id' => 'nullable|exists:dai_lies,id',
+                'office_id' => 'required|exists:offices,id',
+                'metric_values' => 'nullable|array',
+                // ... các quy tắc khác ...
+                'revenue_sources' => 'required|array|min:1',
+                'revenue_sources.*.source_name' => 'required|string|max:100',
+                'revenue_sources.*.amount' => 'required|numeric|min:0',
+                'record_date' => 'required|date',
+                'record_time' => 'required',
+                'note' => 'nullable|string',
+                'expenses' => 'nullable|array',
+                'expenses.*.expense_type_id' => 'required|exists:expense_types,id',
+                'expenses.*.amount' => 'required|numeric|min:0',
+                'expenses.*.description' => 'nullable|string|max:255',
+                'commission' => 'nullable|numeric|min:0', // Thêm quy tắc xác thực cho commission
             ]);
 
             $totalRevenue = collect($request->revenue_sources)->sum('amount');
