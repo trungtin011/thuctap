@@ -78,10 +78,16 @@ Route::middleware(['check.role:admin'])->group(function () {
     Route::resource('platforms', PlatformController::class)->except(['show']);
     Route::resource('expense-types', ExpenseTypesController::class)->except(['show']);
 
-Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dai-ly/create', [DaiLyController::class, 'create'])->name('dai_ly.create');
-    Route::post('/dai-ly/store', [DaiLyController::class, 'store'])->name('dai_ly.store');
-});
+   Route::prefix('admin')->name('admin.')->group(function () {
+        // Static route for index placed FIRST
+        Route::get('/dai-ly', [DaiLyController::class, 'index'])->name('dai_ly.index');
+        Route::get('/dai-ly/create', [DaiLyController::class, 'create'])->name('dai_ly.create');
+        Route::post('/dai-ly', [DaiLyController::class, 'store'])->name('dai_ly.store');
+        // Dynamic routes placed AFTER static routes
+        Route::get('/dai-ly/{daiLy}/edit', [DaiLyController::class, 'edit'])->name('dai_ly.edit');
+        Route::put('/dai-ly/{daiLy}', [DaiLyController::class, 'update'])->name('dai_ly.update');
+        Route::delete('/dai-ly/{daiLy}', [DaiLyController::class, 'destroy'])->name('dai_ly.destroy');
+    }); 
 
     // Platform
     Route::prefix('platforms')->group(function () {

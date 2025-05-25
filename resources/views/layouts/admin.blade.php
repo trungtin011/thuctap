@@ -137,7 +137,7 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="{{ route('admin.dai_ly.create') }}"
+                                    <a href="{{ route('admin.dai_ly.index') }}"
                                         class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
                                         <i class="mr-2">
                                             <span class="fas fa-money-check-alt"></span>
