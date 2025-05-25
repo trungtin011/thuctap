@@ -1,75 +1,47 @@
-@extends('layouts.navigation')
+@extends('layouts.navbar')
+
+@section('title', 'Đăng nhập')
 
 @section('content')
-    <div class="container mx-auto mt-2">
-        <div class="flex justify-start mb-10">
-            <a href="{{ route('home') }}" class="text-gray-500">Trang chủ</a>
-            <span class="mx-2 text-gray-500">/</span>
-            <a href="#" class="text-gray-500">Đăng nhập</a>
-        </div>
-        @if ($errors->any())
-            <div class="alert bg-red-100 border border-red-400 text-red-700 px-4 py-3 alert-dismissible alert-custom">
-                <a href="{{ url()->current() }}" class="close" data-dismiss="alert" aria-label="close">×</a>
-                <ul class="mb-0 pl-3">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+    <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-2xl font-bold mb-6 text-center">Đăng nhập</h2>
+        <form method="POST" action="{{ route('login') }}">
+            @csrf
+            <div class="mb-4">
+                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" name="email" id="email" value="{{ old('email') }}"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('email') border-red-500 @enderror"
+                    required>
+                @error('email')
+                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                @enderror
             </div>
-        @endif
-        <h2 class="text-2xl font-bold mb-6">Đăng nhập tài khoản</h2>
-        <!-- Nút chọn quyền đăng nhập -->
-        <div class="flex gap-4 mb-6">
-            <a href="{{ route('login.admin') }}">
-                <button class="dark:bg-gray-800 dark:hover:bg-gray-700 text-white px-4 py-2 focus:outline-none">
-                    Đăng nhập Admin
-                </button>
-            </a>
-        </div>
-        <div class="flex">
-            <div class="w-1/2">
-                <form action="{{ route('user.login') }}" method="POST">
-                    @csrf
-                    <div class="mb-4 flex items-center gap-5">
-                        <label class="w-1/2 block text-gray-700 font-bold mb-2" for="email">Tên đăng nhập:</label>
-                        <input
-                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            name="email" id="email" type="text" placeholder="Email hoặc số điện thoại">
-                    </div>
-                    <div class="mb-4 flex items-center gap-5">
-                        <label class="w-1/2 block text-gray-700 font-bold mb-2" for="password">Mật khẩu</label>
-                        <input
-                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            name="password" id="password" type="password" placeholder="Mật khẩu">
-                    </div>
-                    <div class="mb-4">
-                        <div class="g-recaptcha" data-sitekey="your_site_key"></div>
-                    </div>
-                    <div class="mb-4">
-                        <input type="checkbox" id="remember" name="remember">
-                        <label for="remember" class="text-gray-700">Ghi nhớ?</label>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button
-                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                            type="submit">
-                            Đăng nhập
-                        </button>
-                        <a class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800"
-                            href="">
-                            Quên mật khẩu?
-                        </a>
-                    </div>
-                </form>
+
+            <div class="mb-2">
+                <label for="password" class="block text-sm font-medium text-gray-700">Mật khẩu</label>
+                <input type="password" name="password" id="password"
+                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('password') border-red-500 @enderror"
+                    required>
+                @error('password')
+                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                @enderror
             </div>
-            <div class="w-1/2 pl-10">
-                <div class="max-w-lg mx-auto p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
-                    <p>Tài khoản bị tạm khóa do đăng nhập sai nhiều lần, vui lòng SMS mở khóa theo cú pháp:</p>
-                    <p><strong>NS TSR MK gửi 8066</strong> (lấy lại mk) hoặc <strong>NS TSR MKC2 gửi 8066</strong> (lấy lại
-                        mkc2)
-                    </p>
-                </div>
+            
+            <div class="mb-2">
+                <a href="" class="text-sm text-blue-600 hover:underline">Quên mật khẩu?</a>
             </div>
-        </div>
+
+            <button type="submit"
+                class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                Đăng nhập
+            </button>
+            
+            <!-- Register -->
+            <div class="mt-2">
+                <p class="text-sm text-gray-600">Bạn chưa có tài khoản?
+                    <a href="{{ route('register') }}" class="text-blue-600 hover:underline">Đăng ký</a>
+                </p>
+            </div>
+        </form>
     </div>
 @endsection

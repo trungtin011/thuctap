@@ -1,59 +1,135 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-// Auth
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\LoginController;
-// Cards
-use App\Http\Controllers\User\CardsController;
-// Admin
-use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\Admin\PlatformController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\Employee\FinancialController;
+use App\Http\Controllers\ExpenseTypesController;
+use App\Http\Controllers\Manager\FinancialApprovalController;
+use App\Http\Controllers\Admin\FinancialAdminController;
+use App\Http\Controllers\Admin\FinancialTargetController;
+use App\Http\Controllers\Admin\DaiLyController;
+use App\Http\Controllers\Admin\RevenueController;
 
-// User
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+Route::post('/register', [AuthController::class, 'register']);
 
+Route::middleware(['check.role:admin,manager'])->group(function () {
+    Route::get('dashboard', [FinancialAdminController::class, 'totalRevenue'])->name('dashboard');
 
-Route::get('/', function () {
-    return view('index');
-})->name('home');
+    // Route trả view cho biểu đồ
+    Route::get('/revenue-chart', function () {
+        return view('admin.financial.revenue-chart');
+    })->name('revenue.chart');
 
-Route::middleware(['check.role:admin'])->group(function () {
-    Route::prefix('admin')->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+    // Route API để lấy dữ liệu JSON
+    Route::get('/api/revenue', [RevenueController::class, 'getRevenueData']);
+
+    // Đúng (phù hợp với method trong controller):
+    Route::prefix('admin/financial')->name('admin.financial.')->group(function () {
+        // Route hiển thị danh sách bản ghi tài chính
+        Route::get('/', [FinancialAdminController::class, 'index'])->name('index');
+
+        // Route phê duyệt bản ghi tài chính
+        Route::post('/approve/{id}', [FinancialAdminController::class, 'approve'])->name('approve');
+
+        // Route hiển thị lịch sử bản ghi đã phê duyệt
+        Route::get('/history', [FinancialAdminController::class, 'history'])->name('history');
+
+        // Route hiển thị tổng doanh thu và biểu đồ
+        Route::get('/total-revenue', [FinancialAdminController::class, 'totalRevenue'])->name('total_revenue');
+    });
+
+    Route::prefix('manager/financial')->group(function () {
+        Route::get('/financial', [FinancialApprovalController::class, 'index'])->name('manager.financial.index');
+        Route::get('/financial/{id}', [FinancialApprovalController::class, 'show'])->name('manager.financial.show');
+        Route::post('/financial/{id}/approve', [FinancialApprovalController::class, 'approve'])->name('manager.financial.approve');
+        Route::post('/financial/{id}/reject', [FinancialApprovalController::class, 'reject'])->name('manager.financial.reject');
     });
 });
 
-Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-Route::post('/register', [RegisterController::class, 'register']);
+Route::middleware(['check.role:admin'])->group(function () {
+    Route::get('dashboard', [FinancialAdminController::class, 'totalRevenue'])->name('dashboard');
 
+    Route::prefix('users')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('users.index');
+        Route::get('/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('/', [UserController::class, 'store'])->name('users.store');
+        Route::get('/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+    });
 
-// Routes cho người dùng thông thường
-Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'loginUser'])->name('user.login');
-Route::get('/home', function () {
-    return view('index');
-})->middleware('check.role:user')->name('home');
+    // Mục tiêu doanh thu (admin)
+    Route::prefix('admin/targets')->name('admin.targets.')->group(function () {
+        Route::get('/create', [FinancialTargetController::class, 'create'])->name('create');
+        Route::post('/store', [FinancialTargetController::class, 'store'])->name('store');
+        Route::delete('/{id}', [FinancialTargetController::class, 'destroy'])->name('destroy');
+    });
 
-// Routes cho quản trị viên
-Route::get('/admin/login', [LoginController::class, 'showAdminLoginForm'])->name('login.admin');
-Route::post('/admin/login', [LoginController::class, 'loginAdmin'])->name('admin.login');
-Route::get('/admin/dashboard', function () {
-    return view('admin.index');
-})->middleware('check.role:admin')->name('admin.dashboard');
-Route::get('/superadmin/dashboard', function () {
-    return view('superadmin.index');
-})->middleware('check.role:superadmin')->name('superadmin.dashboard');
+    Route::resource('roles', RoleController::class)->except(['show']);
+    Route::resource('departments', DepartmentController::class)->except(['show']);
+    Route::resource('platforms', PlatformController::class)->except(['show']);
+    Route::resource('expense-types', ExpenseTypesController::class)->except(['show']);
 
-// Route đăng xuất
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-
-// Route 404
-Route::get('/404', function () {
-    return view('errors.404');
-})->name('404');
-
-// Cards routes 
-Route::middleware(['auth'])->group(function () {
-    Route::post('/cards/submit', [CardsController::class, 'submitCard'])->name('cards.submit');
-    Route::post('/cards/callback', [CardsController::class, 'callback'])->name('callback.card');
-    Route::get('/cards/history', [CardsController::class, 'history'])->name('cards.history');
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dai-ly/create', [DaiLyController::class, 'create'])->name('dai_ly.create');
+    Route::post('/dai-ly/store', [DaiLyController::class, 'store'])->name('dai_ly.store');
 });
+
+    // Platform
+    Route::prefix('platforms')->group(function () {
+        Route::get('/', [PlatformController::class, 'index'])->name('platforms.index');
+        Route::get('/create', [PlatformController::class, 'create'])->name('platforms.create');
+        Route::post('/', [PlatformController::class, 'store'])->name('platforms.store');
+        Route::get('/{platform}/edit', [PlatformController::class, 'edit'])->name('platforms.edit');
+        Route::put('/{platform}', [PlatformController::class, 'update'])->name('platforms.update');
+        Route::delete('/{platform}', [PlatformController::class, 'destroy'])->name('platforms.destroy');
+        Route::delete('/{platform}/metrics/{metric}', [PlatformController::class, 'destroyMetric'])->name('platforms.metrics.destroy');
+    });
+
+    // Đúng (phù hợp với method trong controller):
+    Route::prefix('admin/financial')->name('admin.financial.')->group(function () {
+        // Route hiển thị danh sách bản ghi tài chính
+        Route::get('/', [FinancialAdminController::class, 'index'])->name('index');
+
+        // Route phê duyệt bản ghi tài chính
+        Route::post('/approve/{id}', [FinancialAdminController::class, 'approve'])->name('approve');
+
+        // Route hiển thị lịch sử bản ghi đã phê duyệt
+        Route::get('/history', [FinancialAdminController::class, 'history'])->name('history');
+
+        // Route hiển thị tổng doanh thu và biểu đồ
+        Route::get('/total-revenue', [FinancialAdminController::class, 'totalRevenue'])->name('total_revenue');
+    });
+
+    // Thêm route cho mục tiêu doanh thu năm (admin)
+    Route::post('/admin/financial/set-goal', [FinancialAdminController::class, 'setGoal'])->name('admin.financial.set_goal');
+});
+
+Route::prefix('employee/financial')->group(function () {
+    Route::get('/', [FinancialController::class, 'index'])->name('employee.financial.index');
+    Route::get('/create', [FinancialController::class, 'create'])->name('employee.financial.create');
+    Route::post('/store', [FinancialController::class, 'store'])->name('employee.financial.store');
+    Route::get('/{id}/edit', [FinancialController::class, 'edit'])->name('employee.financial.edit');
+    Route::put('/{id}', [FinancialController::class, 'update'])->name('employee.financial.update');
+    Route::delete('/{id}', [FinancialController::class, 'destroy'])->name('employee.financial.destroy');
+    Route::get('/get-metrics/{platformId}', [FinancialController::class, 'getMetrics'])->name('employee.financial.get-metrics');
+    Route::get('/get-metric-values/{metricId}', [FinancialController::class, 'getMetricValues'])->name('employee.financial.get-metric-values');
+    Route::get('/get-metric-values-for-record/{recordId}', [FinancialController::class, 'getMetricValuesForRecord'])->name('employee.financial.getMetricValuesForRecord');
+});
+
+
+Route::get('/', function () {
+    return view('welcome');
+})->name('welcome');
+
+
+// Sai (gây lỗi):
+Route::get('/admin/financial/filter', [FinancialAdminController::class, 'filterCustom']);
