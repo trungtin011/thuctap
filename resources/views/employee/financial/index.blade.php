@@ -140,7 +140,9 @@
                                         @endswitch
                                     </td>
 
-                                    <td>{{ $record->record_date }}</td>
+                                    <td>
+                                        {{ \Illuminate\Support\Carbon::parse($record->record_date)->format('Y-m-d') }} {{ $record->record_time }}
+                                    </td>
 
                                     {{-- Hành động --}}
                                     <td class="text-center">
