@@ -86,6 +86,7 @@
                             <th scope="col" class="px-6 py-3 bg-white">Phòng ban</th>
                             <th scope="col" class="px-6 py-3 bg-white">Nền tảng</th>
                             <th scope="col" class="px-6 py-3 bg-white">Doanh thu</th>
+                            <th scope="col" class="px-6 py-3 bg-white">Hoa hồng</th>
                             <th scope="col" class="px-6 py-3 bg-white">Trạng thái</th>
                             <th scope="col" class="px-6 py-3 bg-white">Hành động</th>
                         </tr>
@@ -98,6 +99,8 @@
                                 <td class="px-6 py-4">{{ $record->department->name ?? 'N/A' }}</td>
                                 <td class="px-6 py-4">{{ $record->platform->name ?? 'N/A' }}</td>
                                 <td class="px-6 py-4">{{ number_format($record->revenue) }} VND</td>
+                                <td class="px-6 py-4 text-blue-600 font-bold">{{ number_format($record->commission, 2) }}
+                                    VND</td>
                                 <td class="px-6 py-4">
                                     <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Quản
                                         lý đã duyệt</span>

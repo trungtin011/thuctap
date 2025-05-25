@@ -14,6 +14,7 @@ use App\Models\ExpenseType;
 use App\Models\PlatformMetric;
 use App\Models\MetricValue;
 use App\Models\Daily;
+use App\Models\Office;
 
 class FinancialController extends Controller
 {
@@ -53,9 +54,10 @@ class FinancialController extends Controller
         $platforms = Platform::all();
         $expenseTypes = ExpenseType::all();
          $dailies = Daily::all();
+         $offices = Office::all();
 
 
-        return view('employee.financial.index', compact('financialRecords', 'platforms', 'expenseTypes', 'dailies'));
+        return view('employee.financial.index', compact('financialRecords', 'platforms', 'expenseTypes', 'dailies', 'offices'));
     }
 
     public function create()
@@ -68,7 +70,8 @@ class FinancialController extends Controller
         $platforms = Platform::all();
         $expenseTypes = ExpenseType::all();
          $dailies = Daily::all();
-        return view('employee.financial.create', compact('department', 'platforms', 'expenseTypes', 'dailies'));
+         $offices = Office::all();
+        return view('employee.financial.create', compact('department', 'platforms', 'expenseTypes', 'dailies', 'offices'));
     }
 
     public function store(Request $request)
@@ -90,6 +93,7 @@ class FinancialController extends Controller
                 ],
                 'platform_id' => 'required|exists:platforms,id',
                 'dai_ly_id' => 'required|exists:dai_lies,id',
+                'office_id' => 'required|exists:offices,id',
                 'metric_values' => 'nullable|array',
                 'metric_values.*.metric_id' => [
                     'required',
@@ -150,12 +154,14 @@ class FinancialController extends Controller
                 'department_id' => $validated['department_id'],
                 'platform_id' => $validated['platform_id'],
                 'dai_ly_id' => $validated['dai_ly_id'],
+                'office_id' => $validated['office_id'],
                 'revenue' => $totalRevenue,
                 'record_date' => $validated['record_date'],
                 'record_time' => $validated['record_time'],
                 'note' => $note,
                 'status' => 'pending',
                 'submitted_by' => Auth::id(),
+                'commission' => $validated['commission'] ?? 0,
             ]);
 
             if ($request->has('expenses') && is_array($request->expenses)) {
@@ -216,8 +222,9 @@ class FinancialController extends Controller
         $platforms = Platform::all();
         $expenseTypes = ExpenseType::all();
          $dailies = Daily::all();
+         $offices = Office::all();
 
-        return view('employee.financial.edit', compact('financialRecord', 'department', 'platforms', 'expenseTypes', 'dailies'));
+        return view('employee.financial.edit', compact('financialRecord', 'department', 'platforms', 'expenseTypes', 'dailies', 'offices'));
     }
 
   public function update(Request $request, $id)
@@ -246,7 +253,8 @@ class FinancialController extends Controller
             },
         ],
         'platform_id' => 'required|exists:platforms,id',
-        'dai_ly_id' => 'nullable|exists:dai_lies,id', // ✅ validate thêm dòng này
+        'dai_ly_id' => 'nullable|exists:dai_lies,id',
+        'office_id' => 'required|exists:offices,id',
         'metric_values' => 'nullable|array',
         'metric_values.*.metric_id' => [
             'required',
@@ -298,11 +306,13 @@ class FinancialController extends Controller
     $financialRecord->update([
         'department_id' => $request->department_id,
         'platform_id' => $request->platform_id,
-        'dai_ly_id' => $request->dai_ly_id, // ✅ cập nhật đại lý tại đây
+        'dai_ly_id' => $request->dai_ly_id,
+        'office_id' => $request->office_id,
         'revenue' => $totalRevenue,
         'record_date' => $request->record_date,
         'record_time' => $request->record_time,
         'note' => $note,
+        'commission' => $request->commission ?? 0,
     ]);
 
     // Xóa và thêm lại chi phí

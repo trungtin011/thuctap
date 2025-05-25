@@ -13,6 +13,11 @@ use App\Http\Controllers\Admin\FinancialAdminController;
 use App\Http\Controllers\Admin\FinancialTargetController;
 use App\Http\Controllers\Admin\DaiLyController;
 use App\Http\Controllers\Admin\RevenueController;
+use App\Http\Controllers\ImportController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\OfficeRevenueController;
+use App\Http\Controllers\TripController;
+use App\Http\Controllers\OfficeController;
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -75,6 +80,8 @@ Route::middleware(['check.role:admin'])->group(function () {
 
     Route::resource('roles', RoleController::class)->except(['show']);
     Route::resource('departments', DepartmentController::class)->except(['show']);
+    // Thêm route quản lý chuyến đi và hành khách
+    Route::resource('trips', \App\Http\Controllers\TripController::class)->except(['show']);
     Route::resource('platforms', PlatformController::class)->except(['show']);
     Route::resource('expense-types', ExpenseTypesController::class)->except(['show']);
 
@@ -117,6 +124,22 @@ Route::middleware(['check.role:admin'])->group(function () {
 
     // Thêm route cho mục tiêu doanh thu năm (admin)
     Route::post('/admin/financial/set-goal', [FinancialAdminController::class, 'setGoal'])->name('admin.financial.set_goal');
+
+    // Nhập liệu tự động từ Excel
+    Route::get('import', [ImportController::class, 'showForm'])->name('import.form');
+    Route::post('import', [ImportController::class, 'import'])->name('import.excel');
+
+    // Báo cáo doanh thu chi tiết
+    Route::get('reports/financial', [ReportController::class, 'financial'])->name('reports.financial');
+    Route::get('reports/office', [ReportController::class, 'office'])->name('reports.office');
+    Route::get('reports/trips', [ReportController::class, 'trips'])->name('reports.trips');
+    Route::get('reports/commission', [ReportController::class, 'commission'])->name('reports.commission');
+
+    // Quản lý phòng hàng & tuyến đường
+    Route::resource('office-revenues', OfficeRevenueController::class)->except(['show']);
+    Route::resource('trips', TripController::class)->except(['show']);
+    // Thêm quản lý văn phòng (office)
+    Route::resource('offices', OfficeController::class)->except(['show']);
 });
 
 Route::prefix('employee/financial')->group(function () {

@@ -110,6 +110,15 @@
                                     </a>
                                 </li>
                                 <li>
+                                    <a href="{{ route('offices.index') }}"
+                                        class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
+                                        <i class="mr-2">
+                                            <span class="fas fa-city"></span>
+                                        </i>
+                                        Văn phòng
+                                    </a>
+                                </li>
+                                <li>
                                     <a href="{{ route('platforms.index') }}"
                                         class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
                                         <i class="mr-2">
@@ -143,6 +152,15 @@
                                             <span class="fas fa-money-check-alt"></span>
                                         </i>
                                         Đai Lý
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('reports.commission') }}"
+                                        class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
+                                        <i class="mr-2">
+                                            <span class="fas fa-percentage"></span>
+                                        </i>
+                                        Hoa hồng
                                     </a>
                                 </li>
                             </ul>

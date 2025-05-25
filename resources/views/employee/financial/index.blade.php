@@ -8,6 +8,25 @@
             <h5 class="mb-0">Lịch Sử Doanh Thu</h5>
         </div>
         <div class="card-body">
+            {{-- Tổng hợp nhanh --}}
+            @php
+                $totalRevenue = $financialRecords->sum('revenue');
+                $totalExpense = $financialRecords->flatMap(function($r) { return $r->expenses; })->sum('amount');
+                $avgRoas = $financialRecords->count() > 0 ? round($financialRecords->where('roas', '!=', null)->avg('roas'), 2) : 0;
+                $recordCount = $financialRecords->count();
+                $roasWarnings = $financialRecords->filter(function($r) { return $r->roas !== null && ($r->roas < 1 || $r->roas > 10); });
+            @endphp
+            <div class="mb-3 row">
+                <div class="col-md-3"><strong>Tổng doanh thu:</strong> {{ number_format($totalRevenue, 2) }} VNĐ</div>
+                <div class="col-md-3"><strong>Tổng chi phí:</strong> {{ number_format($totalExpense, 2) }} VNĐ</div>
+                <div class="col-md-3"><strong>ROAS TB:</strong> {{ $avgRoas }}</div>
+                <div class="col-md-3"><strong>Số bản ghi:</strong> {{ $recordCount }}</div>
+            </div>
+            @if($roasWarnings->count() > 0)
+                <div class="alert alert-warning">
+                    <strong>Cảnh báo:</strong> Có {{ $roasWarnings->count() }} bản ghi có ROAS bất thường (ROAS &lt; 1 hoặc &gt; 10).
+                </div>
+            @endif
             {{-- Form lọc nâng cao --}}
             <form method="GET" action="" class="row g-3 mb-4 align-items-end">
                 <div class="col-md-3">
@@ -81,11 +100,12 @@
                                 <tr data-id="{{ $record->id }}" data-platform-id="{{ $record->platform_id }}"
                                     data-revenue="{{ $record->revenue }}" data-record-date="{{ $record->record_date }}"
                                     data-record-time="{{ $record->record_time }}"
-                                    data-note="{{ $record->note ? json_encode(json_decode($record->note)->note) : '' }}"
+                                    data-note="{{ ($record->note && json_decode($record->note)) ? e(optional(json_decode($record->note))->note) : '' }}"
                                     data-expenses="{{ json_encode($record->expenses) }}"
                                     data-revenue-sources="{{ json_encode($record->revenue_sources ?? []) }}"
-                                    data-metric-values="{{ json_encode($record->metric_values ?? []) }}">
-
+                                    data-metric-values="{{ json_encode($record->metric_values ?? []) }}"
+                                    @if($record->roas !== null && ($record->roas < 1 || $record->roas > 10)) style="background:#fff3cd;" @endif
+                                >
                                     <td>{{ $record->id }}</td>
                                     <td>{{ $record->department->name }}</td>
                                     <td>{{ $record->daily->ten_dai_ly ?? 'Chưa có đại lý' }}</td>
@@ -114,7 +134,11 @@
                                         @endforeach
                                     </td>
 
-                                    <td>{{ $record->roas ? number_format($record->roas, 2) : 'N/A' }}</td>
+                                    <td>{{ $record->roas ? number_format($record->roas, 2) : 'N/A' }}
+                                        @if($record->roas !== null && ($record->roas < 1 || $record->roas > 10))
+                                            <span class="badge bg-warning text-dark">!</span>
+                                        @endif
+                                    </td>
 
                                     {{-- Trạng thái --}}
                                     <td>
@@ -167,6 +191,12 @@
                         </tbody>
                     </table>
                 </div>
+                {{-- Thêm phân trang nếu cần --}}
+                @if(method_exists($financialRecords, 'links'))
+                    <div class="mt-3">
+                        {{ $financialRecords->links() }}
+                    </div>
+                @endif
             @endif
 
             <div class="mt-4">
@@ -195,16 +225,31 @@
                                 readonly>
                             <div class="invalid-feedback" id="department_id_error"></div>
                         </div>
-<div class="mb-3">
-  <label for="dai_ly_id" class="form-label">Chọn Đại lý</label>
-  <select name="dai_ly_id" id="dai_ly_id" class="form-select" required>
-      <option value="">-- Chọn đại lý --</option>
-      @foreach($dailies as $daily)
-          <option value="{{ $daily->id }}">{{ $daily->ten_dai_ly }}</option>
-      @endforeach
-  </select>
-  <div class="invalid-feedback" id="dai_ly_id_error"></div>
-</div>
+                        <div class="mb-3">
+                            <label for="office_id" class="form-label">Chọn Văn phòng</label>
+                            <select name="office_id" id="office_id" class="form-select" required>
+                                <option value="">-- Chọn văn phòng --</option>
+                                @foreach($offices as $office)
+                                    <option value="{{ $office->id }}">{{ $office->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="invalid-feedback" id="office_id_error"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="commission" class="form-label">Hoa hồng (VNĐ)</label>
+                            <input type="number" name="commission" id="commission" class="form-control" min="0" step="1000" value="0">
+                            <div class="invalid-feedback" id="commission_error"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dai_ly_id" class="form-label">Chọn Đại lý</label>
+                            <select name="dai_ly_id" id="dai_ly_id" class="form-select" required>
+                                <option value="">-- Chọn đại lý --</option>
+                                @foreach($dailies as $daily)
+                                    <option value="{{ $daily->id }}">{{ $daily->ten_dai_ly }}</option>
+                                @endforeach
+                            </select>
+                            <div class="invalid-feedback" id="dai_ly_id_error"></div>
+                        </div>
 
 
 
@@ -325,16 +370,31 @@
                                 readonly>
                             <div class="invalid-feedback" id="edit_department_id_error"></div>
                         </div>
-<div class="mb-3">
-    <label class="form-label">Đại lý</label>
-    <select name="dai_ly_id" class="form-select" required>
-        <option value="">Chọn đại lý</option>
-        @foreach ($dailies as $daiLy)
-            <option value="{{ $daiLy->id }}">{{ $daiLy->ten_dai_ly }}</option>
-        @endforeach
-    </select>
-    <div class="invalid-feedback" id="edit_dai_ly_id_error"></div>
-</div>
+                        <div class="mb-3">
+                            <label for="edit_office_id" class="form-label">Chọn Văn phòng</label>
+                            <select name="office_id" id="edit_office_id" class="form-select" required>
+                                <option value="">-- Chọn văn phòng --</option>
+                                @foreach($offices as $office)
+                                    <option value="{{ $office->id }}">{{ $office->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="invalid-feedback" id="edit_office_id_error"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_commission" class="form-label">Hoa hồng (VNĐ)</label>
+                            <input type="number" name="commission" id="edit_commission" class="form-control" min="0" step="1000" value="0">
+                            <div class="invalid-feedback" id="edit_commission_error"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Đại lý</label>
+                            <select name="dai_ly_id" class="form-select" required>
+                                <option value="">Chọn đại lý</option>
+                                @foreach ($dailies as $daiLy)
+                                    <option value="{{ $daiLy->id }}">{{ $daiLy->ten_dai_ly }}</option>
+                                @endforeach
+                            </select>
+                            <div class="invalid-feedback" id="edit_dai_ly_id_error"></div>
+                        </div>
 
                         <div class="mb-3">
                             <label class="form-label">Nền tảng</label>

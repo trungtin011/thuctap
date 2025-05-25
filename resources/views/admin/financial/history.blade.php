@@ -27,6 +27,7 @@
                 <th style="padding:10px 12px;">Phòng ban</th>
                 <th style="padding:10px 12px;">Nền tảng</th>
                 <th style="padding:10px 12px;">Doanh thu</th>
+                <th style="padding:10px 12px;">Hoa hồng</th>
                 <th style="padding:10px 12px;">Trạng thái</th>
                 <th style="padding:10px 12px;">Ngày phê duyệt</th>
             </tr>
@@ -38,6 +39,7 @@
                     <td style="padding:8px 12px;">{{ $record->department->name ?? 'N/A' }}</td>
                     <td style="padding:8px 12px;">{{ $record->platform->name ?? 'N/A' }}</td>
                     <td style="padding:8px 12px;">{{ number_format($record->revenue) }} VNĐ</td>
+                    <td style="padding:8px 12px; color:#007bff; font-weight:bold;">{{ number_format($record->commission, 2) }} VNĐ</td>
                     <td style="padding:8px 12px;">
                         <span style="padding:4px 10px;border-radius:12px;font-size:0.95em;color:#fff;background:#28a745;">
                             Admin đã duyệt

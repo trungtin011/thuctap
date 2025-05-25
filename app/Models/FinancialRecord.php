@@ -87,5 +87,9 @@ class FinancialRecord extends Model
 {
     return $this->belongsTo(DaiLy::class, 'dai_ly_id');
 }
+public function route()
+{
+    return $this->belongsTo(\App\Models\Route::class, 'route_id');
+}
 
 }

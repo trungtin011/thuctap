@@ -46,6 +46,7 @@ class FinancialAdminController extends Controller
 
         $financialRecords = $query->orderBy('created_at', 'desc')->paginate(15);
 
+        // Truyền thêm trường commission cho view
         return view('admin.financial.index', compact('financialRecords', 'departments', 'platforms', 'status'));
     }
 
@@ -61,8 +62,8 @@ class FinancialAdminController extends Controller
 
     public function history()
     {
-        // Lấy các đơn đã được admin phê duyệt
-        $financialRecords = FinancialRecord::where('status', 'admin_approved')->get();
+        // Lấy các đơn đã được admin phê duyệt, truyền trường commission
+        $financialRecords = FinancialRecord::where('status', 'admin_approved')->with(['department', 'platform'])->get();
 
         return view('admin.financial.history', compact('financialRecords'));
     }
