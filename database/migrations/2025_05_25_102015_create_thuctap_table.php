@@ -117,6 +117,13 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // Tạo bảng offices
+        Schema::create('offices', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->string('name', 255);
+            $table->timestamps();
+        });
+
         // Tạo bảng financial_records
         Schema::create('financial_records', function (Blueprint $table) {
             $table->id();
@@ -125,12 +132,13 @@ return new class extends Migration
             $table->foreignId('dai_ly_id')->constrained()->onDelete('cascade');
             $table->foreignId('office_id')->constrained()->onDelete('cascade');
             $table->decimal('revenue', 15, 2);
-            $table->decimal('commission', 15, 2)->nullable()->default(0); // Đảm bảo cột commission tồn tại
+            $table->decimal('commission', 15, 2)->nullable()->default(0);
+            $table->decimal('roas', 15, 2)->nullable(); // Thêm cột roas
             $table->date('record_date');
             $table->time('record_time');
             $table->text('note')->nullable();
             $table->string('status')->default('pending');
-            $table->foreignId('submitted_by')->constrained('users')->onDelete('cascade');
+            $table->foreignId('submitted_by')->constrained('employees')->onDelete('cascade'); // Sửa thành employees
             $table->timestamps();
         });
 
@@ -243,13 +251,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Tạo bảng offices
-        Schema::create('offices', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->string('name', 255);
-            $table->timestamps();
-        });
-
         // Tạo bảng office_revenues
         Schema::create('office_revenues', function (Blueprint $table) {
             $table->bigIncrements('id');
@@ -334,19 +335,37 @@ return new class extends Migration
         // Dữ liệu cho bảng employees
         DB::table('employees')->insert([
             [
-                'id' => 1, 'department_id' => 1, 'role_id' => 1, 'name' => 'John Doe', 'position' => 'Chuyên viên Marketing',
-                'email' => 'khoaebanypk03641@gmail.com', 'password' => '$2y$12$vsgKYK0qK0kVSwdzLZbwie5YiSJWa/GTZxK4CZh1cJVhLsJBL4Iym',
-                'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'
+                'id' => 1,
+                'department_id' => 1,
+                'role_id' => 1,
+                'name' => 'John Doe',
+                'position' => 'Chuyên viên Marketing',
+                'email' => 'khoaebanypk03641@gmail.com',
+                'password' => '$2y$12$vsgKYK0qK0kVSwdzLZbwie5YiSJWa/GTZxK4CZh1cJVhLsJBL4Iym',
+                'created_at' => '2025-05-23 19:14:38',
+                'updated_at' => '2025-05-23 19:14:38'
             ],
             [
-                'id' => 2, 'department_id' => 1, 'role_id' => 2, 'name' => 'Jane Smith', 'position' => 'Quản lý Marketing',
-                'email' => 'ykhoa11a13@gmail.com', 'password' => '$2y$12$n.T0n0fU7rAfw2FsBfHUkugcgQxf4sKTAzdvrrKgKGvpJxW1qBQqu',
-                'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'
+                'id' => 2,
+                'department_id' => 1,
+                'role_id' => 2,
+                'name' => 'Jane Smith',
+                'position' => 'Quản lý Marketing',
+                'email' => 'ykhoa11a13@gmail.com',
+                'password' => '$2y$12$n.T0n0fU7rAfw2FsBfHUkugcgQxf4sKTAzdvrrKgKGvpJxW1qBQqu',
+                'created_at' => '2025-05-23 19:14:38',
+                'updated_at' => '2025-05-23 19:14:38'
             ],
             [
-                'id' => 3, 'department_id' => 1, 'role_id' => 3, 'name' => 'Admin User', 'position' => 'Quản trị viên',
-                'email' => 'dauxanh008@gmail.com', 'password' => '$2y$12$xQFA1qlqWuWyT54d5rwr../lLjDcYwxTEhdWl.mfsLiRglu4IzZVm',
-                'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'
+                'id' => 3,
+                'department_id' => 1,
+                'role_id' => 3,
+                'name' => 'Admin User',
+                'position' => 'Quản trị viên',
+                'email' => 'dauxanh008@gmail.com',
+                'password' => '$2y$12$xQFA1qlqWuWyT54d5rwr../lLjDcYwxTEhdWl.mfsLiRglu4IzZVm',
+                'created_at' => '2025-05-23 19:14:38',
+                'updated_at' => '2025-05-23 19:14:38'
             ],
         ]);
 
@@ -401,47 +420,145 @@ return new class extends Migration
             ['id' => 11, 'name' => 'Xe hợp đồng', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
         ]);
 
+        // Dữ liệu cho bảng offices
+        DB::table('offices')->insert([
+            ['id' => 1, 'name' => 'VP 49', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['id' => 2, 'name' => 'VP BT', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['id' => 3, 'name' => 'VP CMG', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['id' => 4, 'name' => 'VP Q5', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['id' => 5, 'name' => 'VP ĐL', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['id' => 6, 'name' => 'VP NT', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+        ]);
+
         // Dữ liệu cho bảng financial_records
         DB::table('financial_records')->insert([
             [
-                'id' => 1, 'dai_ly_id' => 1, 'department_id' => 1, 'platform_id' => 1, 'route_id' => 1, 'revenue' => 1101465000.00, 'commission' => 121264230.00,
-                'record_date' => '2025-01-31', 'record_time' => '23:59:00', 'note' => 'Doanh thu Adam T1/2025', 'status' => 'pending', 'submitted_by' => 1,
-                'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'
+                'id' => 1,
+                'dai_ly_id' => 1,
+                'department_id' => 1,
+                'platform_id' => 1,
+                'office_id' => 1,
+                'revenue' => 1101465000.00,
+                'commission' => 121264230.00,
+                'record_date' => '2025-01-31',
+                'record_time' => '23:59:00',
+                'note' => 'Doanh thu Adam T1/2025',
+                'status' => 'pending',
+                'submitted_by' => 1,
+                'created_at' => '2025-05-25 17:04:00',
+                'updated_at' => '2025-05-25 17:04:00'
             ],
             [
-                'id' => 2, 'dai_ly_id' => 2, 'department_id' => 1, 'platform_id' => 2, 'route_id' => 1, 'revenue' => 3931184500.00, 'commission' => 395440870.00,
-                'record_date' => '2025-01-31', 'record_time' => '23:59:00', 'note' => 'Doanh thu Vé xe rẻ T1/2025', 'status' => 'pending', 'submitted_by' => 1,
-                'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'
+                'id' => 2,
+                'dai_ly_id' => 2,
+                'department_id' => 1,
+                'platform_id' => 2,
+                'office_id' => 1,
+                'revenue' => 3931184500.00,
+                'commission' => 395440870.00,
+                'record_date' => '2025-01-31',
+                'record_time' => '23:59:00',
+                'note' => 'Doanh thu Vé xe rẻ T1/2025',
+                'status' => 'pending',
+                'submitted_by' => 1,
+                'created_at' => '2025-05-25 17:04:00',
+                'updated_at' => '2025-05-25 17:04:00'
             ],
             [
-                'id' => 3, 'dai_ly_id' => 3, 'department_id' => 1, 'platform_id' => 3, 'route_id' => 1, 'revenue' => 111675000.00, 'commission' => 11167500.00,
-                'record_date' => '2025-01-31', 'record_time' => '23:59:00', 'note' => 'Doanh thu Redbus T1/2025', 'status' => 'pending', 'submitted_by' => 1,
-                'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'
+                'id' => 3,
+                'dai_ly_id' => 3,
+                'department_id' => 1,
+                'platform_id' => 3,
+                'office_id' => 1,
+                'revenue' => 111675000.00,
+                'commission' => 11167500.00,
+                'record_date' => '2025-01-31',
+                'record_time' => '23:59:00',
+                'note' => 'Doanh thu Redbus T1/2025',
+                'status' => 'pending',
+                'submitted_by' => 1,
+                'created_at' => '2025-05-25 17:04:00',
+                'updated_at' => '2025-05-25 17:04:00'
             ],
             [
-                'id' => 4, 'dai_ly_id' => 4, 'department_id' => 1, 'platform_id' => 4, 'route_id' => 1, 'revenue' => 2800000.00, 'commission' => 280000.00,
-                'record_date' => '2025-01-31', 'record_time' => '23:59:00', 'note' => 'Doanh thu Mobitrip T1/2025', 'status' => 'pending', 'submitted_by' => 1,
-                'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'
+                'id' => 4,
+                'dai_ly_id' => 4,
+                'department_id' => 1,
+                'platform_id' => 4,
+                'office_id' => 1,
+                'revenue' => 2800000.00,
+                'commission' => 280000.00,
+                'record_date' => '2025-01-31',
+                'record_time' => '23:59:00',
+                'note' => 'Doanh thu Mobitrip T1/2025',
+                'status' => 'pending',
+                'submitted_by' => 1,
+                'created_at' => '2025-05-25 17:04:00',
+                'updated_at' => '2025-05-25 17:04:00'
             ],
             [
-                'id' => 5, 'dai_ly_id' => 5, 'department_id' => 1, 'platform_id' => 5, 'route_id' => 1, 'revenue' => 874894500.00, 'commission' => 5000000.00,
-                'record_date' => '2025-01-31', 'record_time' => '23:59:00', 'note' => 'Doanh thu WEB/APP T1/2025', 'status' => 'pending', 'submitted_by' => 1,
-                'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'
+                'id' => 5,
+                'dai_ly_id' => 5,
+                'department_id' => 1,
+                'platform_id' => 5,
+                'office_id' => 1,
+                'revenue' => 874894500.00,
+                'commission' => 5000000.00,
+                'record_date' => '2025-01-31',
+                'record_time' => '23:59:00',
+                'note' => 'Doanh thu WEB/APP T1/2025',
+                'status' => 'pending',
+                'submitted_by' => 1,
+                'created_at' => '2025-05-25 17:04:00',
+                'updated_at' => '2025-05-25 17:04:00'
             ],
             [
-                'id' => 6, 'dai_ly_id' => 6, 'department_id' => 1, 'platform_id' => 6, 'route_id' => 1, 'revenue' => 6661933500.00, 'commission' => 36683841.15,
-                'record_date' => '2025-01-31', 'record_time' => '23:59:00', 'note' => 'Doanh thu QR T1/2025', 'status' => 'pending', 'submitted_by' => 1,
-                'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'
+                'id' => 6,
+                'dai_ly_id' => 6,
+                'department_id' => 1,
+                'platform_id' => 6,
+                'office_id' => 1,
+                'revenue' => 6661933500.00,
+                'commission' => 36683841.15,
+                'record_date' => '2025-01-31',
+                'record_time' => '23:59:00',
+                'note' => 'Doanh thu QR T1/2025',
+                'status' => 'pending',
+                'submitted_by' => 1,
+                'created_at' => '2025-05-25 17:04:00',
+                'updated_at' => '2025-05-25 17:04:00'
             ],
             [
-                'id' => 7, 'dai_ly_id' => 7, 'department_id' => 1, 'platform_id' => 7, 'route_id' => 1, 'revenue' => 561839000.00, 'commission' => 1000000.00,
-                'record_date' => '2025-01-31', 'record_time' => '23:59:00', 'note' => 'Doanh thu Các văn phòng T1/2025', 'status' => 'pending', 'submitted_by' => 1,
-                'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'
+                'id' => 7,
+                'dai_ly_id' => 7,
+                'department_id' => 1,
+                'platform_id' => 7,
+                'office_id' => 1,
+                'revenue' => 561839000.00,
+                'commission' => 1000000.00,
+                'record_date' => '2025-01-31',
+                'record_time' => '23:59:00',
+                'note' => 'Doanh thu Các văn phòng T1/2025',
+                'status' => 'pending',
+                'submitted_by' => 1,
+                'created_at' => '2025-05-25 17:04:00',
+                'updated_at' => '2025-05-25 17:04:00'
             ],
             [
-                'id' => 8, 'dai_ly_id' => 8, 'department_id' => 1, 'platform_id' => 7, 'route_id' => 1, 'revenue' => 92906000.00, 'commission' => 200000.00,
-                'record_date' => '2025-01-31', 'record_time' => '23:59:00', 'note' => 'Doanh thu Vé thương gia T1/2025', 'status' => 'pending', 'submitted_by' => 1,
-                'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'
+                'id' => 8,
+                'dai_ly_id' => 8,
+                'department_id' => 1,
+                'platform_id' => 7,
+                'office_id' => 1,
+                'revenue' => 92906000.00,
+                'commission' => 200000.00,
+                'record_date' => '2025-01-31',
+                'record_time' => '23:59:00',
+                'note' => 'Doanh thu Vé thương gia T1/2025',
+                'status' => 'pending',
+                'submitted_by' => 1,
+                'created_at' => '2025-05-25 17:04:00',
+                'updated_at' => '2025-05-25 17:04:00'
             ],
         ]);
 
@@ -456,16 +573,6 @@ return new class extends Migration
         // Dữ liệu cho bảng financial_targets
         DB::table('financial_targets')->insert([
             ['id' => 1, 'year' => 2025, 'department_id' => 1, 'target_amount' => 35017977699.00, 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
-        ]);
-
-        // Dữ liệu cho bảng offices
-        DB::table('offices')->insert([
-            ['id' => 1, 'name' => 'VP 49', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
-            ['id' => 2, 'name' => 'VP BT', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
-            ['id' => 3, 'name' => 'VP CMG', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
-            ['id' => 4, 'name' => 'VP Q5', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
-            ['id' => 5, 'name' => 'VP ĐL', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
-            ['id' => 6, 'name' => 'VP NT', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
         ]);
 
         // Dữ liệu cho bảng office_revenues
@@ -525,11 +632,11 @@ return new class extends Migration
         // Xóa các bảng theo thứ tự ngược lại để tránh lỗi ràng buộc khóa ngoại
         Schema::dropIfExists('trips_passengers');
         Schema::dropIfExists('office_revenues');
-        Schema::dropIfExists('offices');
         Schema::dropIfExists('metric_values');
         Schema::dropIfExists('financial_targets');
         Schema::dropIfExists('expenses');
         Schema::dropIfExists('financial_records');
+        Schema::dropIfExists('offices');
         Schema::dropIfExists('routes');
         Schema::dropIfExists('dai_lies');
         Schema::dropIfExists('expense_types');
