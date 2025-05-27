@@ -85,7 +85,7 @@ Route::middleware(['check.role:admin'])->group(function () {
     Route::resource('platforms', PlatformController::class)->except(['show']);
     Route::resource('expense-types', ExpenseTypesController::class)->except(['show']);
 
-   Route::prefix('admin')->name('admin.')->group(function () {
+    Route::prefix('admin')->name('admin.')->group(function () {
         // Static route for index placed FIRST
         Route::get('/dai-ly', [DaiLyController::class, 'index'])->name('dai_ly.index');
         Route::get('/dai-ly/create', [DaiLyController::class, 'create'])->name('dai_ly.create');
@@ -94,7 +94,7 @@ Route::middleware(['check.role:admin'])->group(function () {
         Route::get('/dai-ly/{daiLy}/edit', [DaiLyController::class, 'edit'])->name('dai_ly.edit');
         Route::put('/dai-ly/{daiLy}', [DaiLyController::class, 'update'])->name('dai_ly.update');
         Route::delete('/dai-ly/{daiLy}', [DaiLyController::class, 'destroy'])->name('dai_ly.destroy');
-    }); 
+    });
 
     // Platform
     Route::prefix('platforms')->group(function () {
@@ -143,15 +143,24 @@ Route::middleware(['check.role:admin'])->group(function () {
 });
 
 Route::prefix('employee/financial')->group(function () {
+    // Danh sách bản ghi
     Route::get('/', [FinancialController::class, 'index'])->name('employee.financial.index');
+
+    // Tạo bản ghi mới
     Route::get('/create', [FinancialController::class, 'create'])->name('employee.financial.create');
-    Route::post('/store', [FinancialController::class, 'store'])->name('employee.financial.store');
+    Route::post('/', [FinancialController::class, 'store'])->name('employee.financial.store');
+
+    // Chỉnh sửa và cập nhật bản ghi
     Route::get('/{id}/edit', [FinancialController::class, 'edit'])->name('employee.financial.edit');
     Route::put('/{id}', [FinancialController::class, 'update'])->name('employee.financial.update');
+
+    // Xóa bản ghi
     Route::delete('/{id}', [FinancialController::class, 'destroy'])->name('employee.financial.destroy');
-    Route::get('/get-metrics/{platformId}', [FinancialController::class, 'getMetrics'])->name('employee.financial.get-metrics');
-    Route::get('/get-metric-values/{metricId}', [FinancialController::class, 'getMetricValues'])->name('employee.financial.get-metric-values');
-    Route::get('/get-metric-values-for-record/{recordId}', [FinancialController::class, 'getMetricValuesForRecord'])->name('employee.financial.getMetricValuesForRecord');
+
+    // Lấy chỉ số và giá trị chỉ số
+    Route::get('/get-metrics/{platformId}', [FinancialController::class, 'getMetrics'])->name('financial.get_metrics');
+    Route::get('/get-metric-values/{metricId}', [FinancialController::class, 'getMetricValues'])->name('financial.get_metric_values');
+    Route::get('/get-record-metric-values/{recordId}', [FinancialController::class, 'getMetricValuesForRecord'])->name('financial.get_record_metric_values');
 });
 
 

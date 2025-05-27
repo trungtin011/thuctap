@@ -4,21 +4,53 @@
 
 @section('content')
     <div class="container mx-auto px-4 py-6">
-        <!-- Form lọc ngày -->
+        <!-- Form lọc -->
         <div class="filter-form rounded-lg mb-6 flex items-center">
-            <form id="filterForm" class="flex items-center gap-4">
+            <form id="filterForm" class="flex items-center gap-4 flex-wrap">
                 <div class="flex flex-col">
-                    <input type="date" name="date1" id="date1" value="2025-04-01" min="2024-01-01" max="2025-12-31"
+                    <label for="date1" class="text-sm font-medium text-gray-700">Từ ngày</label>
+                    <input type="date" name="date1" id="date1"
                         class="border border-dashed border-gray-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div class="flex flex-col">
-                    <input type="date" name="date2" id="date2" value="2025-05-01" min="2024-01-01" max="2025-12-31"
+                    <label for="date2" class="text-sm font-medium text-gray-700">Đến ngày</label>
+                    <input type="date" name="date2" id="date2"
                         class="border border-dashed border-gray-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
-                <button type="submit"
-                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
-                    Lọc
-                </button>
+                <div class="flex flex-col">
+                    <label for="platform_id" class="text-sm font-medium text-gray-700">Nền tảng</label>
+                    <select name="platform_id" id="platform_id"
+                        class="border border-dashed border-gray-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Tất cả</option>
+                    </select>
+                </div>
+                <div class="flex flex-col">
+                    <label for="dai_ly_id" class="text-sm font-medium text-gray-700">Đại lý</label>
+                    <select name="dai_ly_id" id="dai_ly_id"
+                        class="border border-dashed border-gray-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Tất cả</option>
+                    </select>
+                </div>
+                <div class="flex flex-col">
+                    <label for="office_id" class="text-sm font-medium text-gray-700">Văn phòng</label>
+                    <select name="office_id" id="office_id"
+                        class="border border-dashed border-gray-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Tất cả</option>
+                    </select>
+                </div>
+                <div class="flex flex-col">
+                    <label for="department_id" class="text-sm font-medium text-gray-700">Phòng ban</label>
+                    <select name="department_id" id="department_id"
+                        class="border border-dashed border-gray-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Tất cả</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
+                        Lọc
+                    </button>
+                </div>
             </form>
         </div>
 
@@ -50,10 +82,42 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        function populateSelectOptions(selectId, data, valueKey, textKey) {
+            const select = document.getElementById(selectId);
+            data.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item[valueKey];
+                option.textContent = item[textKey];
+                select.appendChild(option);
+            });
+        }
+
         function fetchRevenueData() {
             const date1 = document.getElementById('date1').value;
             const date2 = document.getElementById('date2').value;
-            fetch(`/api/revenue?date1=${date1}&date2=${date2}`)
+            const platform_id = document.getElementById('platform_id').value;
+            const dai_ly_id = document.getElementById('dai_ly_id').value;
+            const office_id = document.getElementById('office_id').value;
+            const department_id = document.getElementById('department_id').value;
+
+            const queryParams = new URLSearchParams({
+                date1,
+                date2,
+                ...(platform_id && {
+                    platform_id
+                }),
+                ...(dai_ly_id && {
+                    dai_ly_id
+                }),
+                ...(office_id && {
+                    office_id
+                }),
+                ...(department_id && {
+                    department_id
+                }),
+            });
+
+            fetch(`/api/revenue?${queryParams}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok ' + response.statusText);
@@ -61,9 +125,22 @@
                     return response.json();
                 })
                 .then(data => {
+                    // Cập nhật danh sách tùy chọn cho các select
+                    document.getElementById('platform_id').innerHTML = '<option value="">Tất cả</option>';
+                    document.getElementById('dai_ly_id').innerHTML = '<option value="">Tất cả</option>';
+                    document.getElementById('office_id').innerHTML = '<option value="">Tất cả</option>';
+                    document.getElementById('department_id').innerHTML = '<option value="">Tất cả</option>';
+
+                    populateSelectOptions('platform_id', data.platforms, 'id', 'name');
+                    populateSelectOptions('dai_ly_id', data.dai_lies, 'id', 'ten_dai_ly');
+                    populateSelectOptions('office_id', data.offices, 'id', 'name');
+                    populateSelectOptions('department_id', data.departments, 'id', 'name');
+
+                    // Hủy biểu đồ cũ nếu tồn tại
                     if (window.barChart) window.barChart.destroy();
                     if (window.lineChart) window.lineChart.destroy();
 
+                    // Biểu đồ cột
                     const barCtx = document.getElementById('revenueBarChart').getContext('2d');
                     window.barChart = new Chart(barCtx, {
                         type: 'bar',
@@ -72,17 +149,17 @@
                             datasets: [{
                                     label: 'Doanh thu (VND)',
                                     data: data.revenues,
-                                    backgroundColor: 'rgba(34, 197, 94, 0.3)', // Màu xanh lá nhạt
-                                    borderColor: 'rgba(34, 197, 94, 1)', // Màu xanh lá đậm
+                                    backgroundColor: 'rgba(34, 197, 94, 0.3)',
+                                    borderColor: 'rgba(34, 197, 94, 1)',
                                     borderWidth: 1,
-                                    borderRadius: 5, // Bo góc cột
-                                    barThickness: 30 // Độ dày cột
+                                    borderRadius: 5,
+                                    barThickness: 30
                                 },
                                 {
                                     label: 'Chi phí (VND)',
                                     data: data.expenses,
-                                    backgroundColor: 'rgba(239, 68, 68, 0.3)', // Màu đỏ nhạt
-                                    borderColor: 'rgba(239, 68, 68, 1)', // Màu đỏ đậm
+                                    backgroundColor: 'rgba(239, 68, 68, 0.3)',
+                                    borderColor: 'rgba(239, 68, 68, 1)',
                                     borderWidth: 1,
                                     borderRadius: 5,
                                     barThickness: 30
@@ -104,14 +181,13 @@
                                         }
                                     },
                                     grid: {
-                                        color: 'rgba(0, 0, 0, 0.05)' // Lưới nhạt hơn
+                                        color: 'rgba(0, 0, 0, 0.05)'
                                     },
                                     ticks: {
                                         font: {
                                             size: 12
                                         },
-                                        callback: value => value.toLocaleString('vi-VN') +
-                                            ' VND' // Định dạng số
+                                        callback: value => value.toLocaleString('vi-VN') + ' VND'
                                     }
                                 },
                                 x: {
@@ -125,7 +201,7 @@
                                     },
                                     grid: {
                                         display: false
-                                    }, // Ẩn lưới trục x
+                                    },
                                     ticks: {
                                         font: {
                                             size: 12
@@ -167,6 +243,7 @@
                         }
                     });
 
+                    // Biểu đồ đường
                     const lineCtx = document.getElementById('revenueLineChart').getContext('2d');
                     window.lineChart = new Chart(lineCtx, {
                         type: 'line',
@@ -177,7 +254,7 @@
                                     data: data.revenues,
                                     fill: false,
                                     borderColor: 'rgba(34, 197, 94, 1)',
-                                    backgroundColor: 'rgba(34, 197, 94, 0.5)', // Màu điểm
+                                    backgroundColor: 'rgba(34, 197, 94, 0.5)',
                                     tension: 0.3,
                                     pointRadius: 5,
                                     pointHoverRadius: 7

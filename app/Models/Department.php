@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Department extends Model
 {
     use HasFactory;
-
+    
+    protected $table = 'departments'; // Tên bảng trong cơ sở dữ liệu
     protected $fillable = [
         'name',
         'description',

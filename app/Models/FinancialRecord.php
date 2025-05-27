@@ -14,6 +14,7 @@ class FinancialRecord extends Model
         'revenue',
         'record_date',
         'record_time',
+        'office_id',
         'note',
         'commission',
         'status',
@@ -85,12 +86,21 @@ class FinancialRecord extends Model
         );
     }
     public function daiLy()
-{
-    return $this->belongsTo(DaiLy::class, 'dai_ly_id');
-}
-public function route()
-{
-    return $this->belongsTo(\App\Models\Route::class, 'route_id');
-}
+    {
+        return $this->belongsTo(DaiLy::class, 'dai_ly_id');
+    }
+    public function route()
+    {
+        return $this->belongsTo(\App\Models\Route::class, 'route_id');
+    }
 
+    public function office()
+    {
+        return $this->belongsTo(Office::class);
+    }
+
+    public function metricValues()
+    {
+        return $this->hasMany(MetricValue::class);
+    }
 }
