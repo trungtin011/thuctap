@@ -6,7 +6,7 @@
     <div class="container mx-auto px-4 py-6">
         <!-- Form lọc -->
         <div class="filter-form rounded-lg mb-6 flex items-center">
-            <form id="filterForm" class="flex items-center gap-4 flex-wrap">
+            <form id="filterForm" class="flex items-end gap-4 flex-wrap">
                 <div class="flex flex-col">
                     <label for="date1" class="text-sm font-medium text-gray-700">Từ ngày</label>
                     <input type="date" name="date1" id="date1"
@@ -45,10 +45,10 @@
                         <option value="">Tất cả</option>
                     </select>
                 </div>
-                <div class="flex items-end">
+                <div class="flex items-center">
                     <button type="submit"
                         class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
-                        Lọc
+                        <i class="fas fa-filter"></i>
                     </button>
                 </div>
             </form>
