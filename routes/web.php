@@ -18,6 +18,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\OfficeRevenueController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\OfficeController;
+use App\Http\Controllers\Admin\FieldController;
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -76,6 +77,8 @@ Route::middleware(['check.role:admin'])->group(function () {
         Route::get('/create', [FinancialTargetController::class, 'create'])->name('create');
         Route::post('/store', [FinancialTargetController::class, 'store'])->name('store');
         Route::delete('/{id}', [FinancialTargetController::class, 'destroy'])->name('destroy');
+
+
     });
 
     Route::resource('roles', RoleController::class)->except(['show']);
@@ -94,6 +97,14 @@ Route::middleware(['check.role:admin'])->group(function () {
         Route::get('/dai-ly/{daiLy}/edit', [DaiLyController::class, 'edit'])->name('dai_ly.edit');
         Route::put('/dai-ly/{daiLy}', [DaiLyController::class, 'update'])->name('dai_ly.update');
         Route::delete('/dai-ly/{daiLy}', [DaiLyController::class, 'destroy'])->name('dai_ly.destroy');
+
+           Route::get('/fields', [FieldController::class, 'index'])->name('truong.fields.index');
+    Route::get('/fields/create', [FieldController::class, 'create'])->name('fields.create');
+    Route::post('/fields', [FieldController::class, 'store'])->name('truong.fields.store');
+Route::get('/fields/{id}/edit', [FieldController::class, 'edit'])->name('fields.edit');
+Route::put('/fields/{id}', [FieldController::class, 'update'])->name('fields.update');
+Route::delete('/fields/{id}', [FieldController::class, 'destroy'])->name('fields.destroy');
+    
     });
 
     // Platform

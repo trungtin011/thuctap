@@ -46,162 +46,169 @@
                 </div>
 
                 @if (Auth::user()->role->level === 'admin')
-                    <nav class="flex-1 p-4 space-y-2">
-                        <!-- Total Revenue Link -->
-                        <a href="{{ route('admin.financial.total_revenue') }}"
-                            class="block px-3 py-2 rounded hover:bg-indigo-800 font-semibold text-yellow-300 transition duration-200">
+                <nav class="flex-1 p-4 space-y-2">
+                    <!-- Total Revenue Link -->
+                    <a href="{{ route('admin.financial.total_revenue') }}"
+                        class="block px-3 py-2 rounded hover:bg-indigo-800 font-semibold text-yellow-300 transition duration-200">
+                        <i class="mr-2">
+                            <span class="fas fa-chart-line"></span>
+                        </i>
+                        Tổng doanh thu
+                    </a>
+                    <!-- Mục tiêu doanh thu -->
+                    <a href="{{ route('admin.targets.create') }}"
+                        class="block px-3 py-2 rounded hover:bg-indigo-800 font-semibold text-green-300">
+                        <i class="mr-2">
+                            <span class="fas fa-bullseye"></span>
+                        </i>
+                        Mục tiêu doanh thu
+                    </a>
+                    <!-- Revenue Analysis Link -->
+                    <a href="{{ route('revenue.chart') }}"
+                        class="block px-3 py-2 rounded hover:bg-indigo-800 font-semibold text-yellow-300 transition duration-200">
+                        <i class="mr-2">
+                            <span class="fas fa-chart-pie"></span>
+                        </i>
+                        Phân tích doanh thu
+                    </a>
+                    <a href="{{ route('admin.truong.fields.index') }}"
+                        class="block px-3 py-2 rounded hover:bg-indigo-800 font-semibold text-yellow-300 transition duration-200">
+                        <i class="mr-2">
+                            <span class="fas fa-chart-pie"></span>
+                        </i>
+                        Thêm trường dữ liệu
+                    </a>
+                    <!-- Management Dropdown -->
+                    <div>
+                        <button
+                            class="dropdown-toggle block px-3 py-2 rounded hover:bg-indigo-800 font-semibold w-full text-left transition duration-200"
+                            onclick="toggleDropdown(this)">
                             <i class="mr-2">
-                                <span class="fas fa-chart-line"></span>
+                                <span class="fas fa-cogs"></span>
                             </i>
-                            Tổng doanh thu
-                        </a>
-                        <!-- Mục tiêu doanh thu -->
-                        <a href="{{ route('admin.targets.create') }}"
-                            class="block px-3 py-2 rounded hover:bg-indigo-800 font-semibold text-green-300">
-                            <i class="mr-2">
-                                <span class="fas fa-bullseye"></span>
-                            </i>
-                            Mục tiêu doanh thu
-                        </a>
-                        <!-- Revenue Analysis Link -->
-                        <a href="{{ route('revenue.chart') }}"
-                            class="block px-3 py-2 rounded hover:bg-indigo-800 font-semibold text-yellow-300 transition duration-200">
-                            <i class="mr-2">
-                                <span class="fas fa-chart-pie"></span>
-                            </i>
-                            Phân tích doanh thu
-                        </a>
-                        <!-- Management Dropdown -->
-                        <div>
-                            <button
-                                class="dropdown-toggle block px-3 py-2 rounded hover:bg-indigo-800 font-semibold w-full text-left transition duration-200"
-                                onclick="toggleDropdown(this)">
-                                <i class="mr-2">
-                                    <span class="fas fa-cogs"></span>
-                                </i>
-                                Quản lý
-                            </button>
-                            <ul class="dropdown-submenu pl-4 space-y-1 hidden">
-                                <li>
-                                    <a href="{{ route('users.index') }}"
-                                        class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
-                                        <i class="mr-2">
-                                            <span class="fas fa-user"></span>
-                                        </i>
-                                        Người dùng
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('roles.index') }}"
-                                        class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
-                                        <i class="mr-2">
-                                            <span class="fas fa-user-tag"></span>
-                                        </i>
-                                        Vai trò
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('departments.index') }}"
-                                        class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
-                                        <i class="mr-2">
-                                            <span class="fas fa-building"></span>
-                                        </i>
-                                        Phòng ban
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('offices.index') }}"
-                                        class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
-                                        <i class="mr-2">
-                                            <span class="fas fa-city"></span>
-                                        </i>
-                                        Văn phòng
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('platforms.index') }}"
-                                        class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
-                                        <i class="mr-2">
-                                            <span class="fas fa-desktop"></span>
-                                        </i>
-                                        Nền tảng
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('expense-types.index') }}"
-                                        class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
-                                        <i class="mr-2">
-                                            <span class="fas fa-money-bill-wave"></span>
-                                        </i>
-                                        Chi phí
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('admin.financial.index') }}"
-                                        class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
-                                        <i class="mr-2">
-                                            <span class="fas fa-money-check-alt"></span>
-                                        </i>
-                                        Duyệt
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('admin.dai_ly.index') }}"
-                                        class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
-                                        <i class="mr-2">
-                                            <span class="fas fa-money-check-alt"></span>
-                                        </i>
-                                        Đai Lý
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('reports.commission') }}"
-                                        class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
-                                        <i class="mr-2">
-                                            <span class="fas fa-percentage"></span>
-                                        </i>
-                                        Hoa hồng
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </nav>
-
-                    <div class="p-4 border-t border-indigo-800 mt-auto">
-                        <div class="mb-2">{{ Auth::user()->name }}</div>
-                        <form action="{{ route('logout') }}" method="POST" class="inline">
-                            @csrf
-                            <button type="submit" class="text-white hover:underline">
-                                <i class="mr-2">
-                                    <span class="fas fa-sign-out-alt"></span>
-                                </i>
-                                Đăng xuất
-                            </button>
-                        </form>
+                            Quản lý
+                        </button>
+                        <ul class="dropdown-submenu pl-4 space-y-1 hidden">
+                            <li>
+                                <a href="{{ route('users.index') }}"
+                                    class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
+                                    <i class="mr-2">
+                                        <span class="fas fa-user"></span>
+                                    </i>
+                                    Người dùng
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('roles.index') }}"
+                                    class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
+                                    <i class="mr-2">
+                                        <span class="fas fa-user-tag"></span>
+                                    </i>
+                                    Vai trò
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('departments.index') }}"
+                                    class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
+                                    <i class="mr-2">
+                                        <span class="fas fa-building"></span>
+                                    </i>
+                                    Phòng ban
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('offices.index') }}"
+                                    class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
+                                    <i class="mr-2">
+                                        <span class="fas fa-city"></span>
+                                    </i>
+                                    Văn phòng
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('platforms.index') }}"
+                                    class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
+                                    <i class="mr-2">
+                                        <span class="fas fa-desktop"></span>
+                                    </i>
+                                    Nền tảng
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('expense-types.index') }}"
+                                    class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
+                                    <i class="mr-2">
+                                        <span class="fas fa-money-bill-wave"></span>
+                                    </i>
+                                    Chi phí
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('admin.financial.index') }}"
+                                    class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
+                                    <i class="mr-2">
+                                        <span class="fas fa-money-check-alt"></span>
+                                    </i>
+                                    Duyệt
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('admin.dai_ly.index') }}"
+                                    class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
+                                    <i class="mr-2">
+                                        <span class="fas fa-money-check-alt"></span>
+                                    </i>
+                                    Đai Lý
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('reports.commission') }}"
+                                    class="block px-3 py-2 rounded hover:bg-indigo-800 transition duration-200">
+                                    <i class="mr-2">
+                                        <span class="fas fa-percentage"></span>
+                                    </i>
+                                    Hoa hồng
+                                </a>
+                            </li>
+                        </ul>
                     </div>
+                </nav>
+
+                <div class="p-4 border-t border-indigo-800 mt-auto">
+                    <div class="mb-2">{{ Auth::user()->name }}</div>
+                    <form action="{{ route('logout') }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" class="text-white hover:underline">
+                            <i class="mr-2">
+                                <span class="fas fa-sign-out-alt"></span>
+                            </i>
+                            Đăng xuất
+                        </button>
+                    </form>
+                </div>
                 @elseif (Auth::user()->role->level == 'manager')
-                    <nav class="flex-1 p-4 space-y-2">
-                        <a href="{{ route('manager.financial.index') }}"
-                            class="block px-3 py-2 rounded hover:bg-indigo-800 font-semibold text-yellow-300 transition duration-200">
-                            <i class="mr-2">
-                                <span class="fas fa-money-check-alt"></span>
-                            </i>
-                            Quản lý bản ghi
-                        </a>
-                    </nav>
+                <nav class="flex-1 p-4 space-y-2">
+                    <a href="{{ route('manager.financial.index') }}"
+                        class="block px-3 py-2 rounded hover:bg-indigo-800 font-semibold text-yellow-300 transition duration-200">
+                        <i class="mr-2">
+                            <span class="fas fa-money-check-alt"></span>
+                        </i>
+                        Quản lý bản ghi
+                    </a>
+                </nav>
 
-                    <div class="p-4 border-t border-indigo-800 mt-auto">
-                        <div class="mb-2">{{ Auth::user()->name }}</div>
-                        <form action="{{ route('logout') }}" method="POST" class="inline">
-                            @csrf
-                            <button type="submit" class="text-white hover:underline">
-                                <i class="mr-2">
-                                    <span class="fas fa-sign-out-alt"></span>
-                                </i>
-                                Đăng xuất
-                            </button>
-                        </form>
-                    </div>
+                <div class="p-4 border-t border-indigo-800 mt-auto">
+                    <div class="mb-2">{{ Auth::user()->name }}</div>
+                    <form action="{{ route('logout') }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" class="text-white hover:underline">
+                            <i class="mr-2">
+                                <span class="fas fa-sign-out-alt"></span>
+                            </i>
+                            Đăng xuất
+                        </button>
+                    </form>
+                </div>
                 @endif
             </aside>
 
@@ -212,22 +219,22 @@
                 }
             </script>
 
-<!-- Main content -->
+            <!-- Main content -->
             <main class="flex-1 flex flex-col min-h-screen">
                 <header class="bg-white shadow p-4">
                     <span class="font-semibold text-lg">@yield('title')</span>
                 </header>
                 <div class="">
                     @if (session('success'))
-                        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
-                            {{ session('success') }}
-                        </div>
+                    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+                        {{ session('success') }}
+                    </div>
                     @endif
 
                     @if (session('error'))
-                        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-                            {{ session('error') }}
-                        </div>
+                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+                        {{ session('error') }}
+                    </div>
                     @endif
                     @yield('content')
                     @yield('scripts')
