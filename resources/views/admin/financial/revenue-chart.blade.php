@@ -4,6 +4,7 @@
 
 @section('content')
     <div class="container mx-auto px-4 py-6">
+<<<<<<< HEAD
         <!-- Form lọc -->
         <div class="filter-form rounded-lg mb-6 flex items-center">
             <form id="filterForm" class="flex items-end gap-4 flex-wrap">
@@ -51,6 +52,23 @@
                         <i class="fas fa-filter"></i>
                     </button>
                 </div>
+=======
+        <!-- Form lọc ngày -->
+        <div class="filter-form rounded-lg mb-6 flex items-center">
+            <form id="filterForm" class="flex items-center gap-4">
+                <div class="flex flex-col">
+                    <input type="date" name="date1" id="date1" value="2025-04-01" min="2024-01-01" max="2025-12-31"
+                        class="border border-dashed border-gray-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex flex-col">
+                    <input type="date" name="date2" id="date2" value="2025-05-01" min="2024-01-01" max="2025-12-31"
+                        class="border border-dashed border-gray-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
+                    Lọc
+                </button>
+>>>>>>> origin/khoa
             </form>
         </div>
 
@@ -82,6 +100,7 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+<<<<<<< HEAD
         function populateSelectOptions(selectId, data, valueKey, textKey) {
             const select = document.getElementById(selectId);
             data.forEach(item => {
@@ -118,6 +137,12 @@
             });
 
             fetch(`/api/revenue?${queryParams}`)
+=======
+        function fetchRevenueData() {
+            const date1 = document.getElementById('date1').value;
+            const date2 = document.getElementById('date2').value;
+            fetch(`/api/revenue?date1=${date1}&date2=${date2}`)
+>>>>>>> origin/khoa
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok ' + response.statusText);
@@ -125,6 +150,7 @@
                     return response.json();
                 })
                 .then(data => {
+<<<<<<< HEAD
                     // Cập nhật danh sách tùy chọn cho các select
                     document.getElementById('platform_id').innerHTML = '<option value="">Tất cả</option>';
                     document.getElementById('dai_ly_id').innerHTML = '<option value="">Tất cả</option>';
@@ -141,6 +167,11 @@
                     if (window.lineChart) window.lineChart.destroy();
 
                     // Biểu đồ cột
+=======
+                    if (window.barChart) window.barChart.destroy();
+                    if (window.lineChart) window.lineChart.destroy();
+
+>>>>>>> origin/khoa
                     const barCtx = document.getElementById('revenueBarChart').getContext('2d');
                     window.barChart = new Chart(barCtx, {
                         type: 'bar',
@@ -149,17 +180,30 @@
                             datasets: [{
                                     label: 'Doanh thu (VND)',
                                     data: data.revenues,
+<<<<<<< HEAD
                                     backgroundColor: 'rgba(34, 197, 94, 0.3)',
                                     borderColor: 'rgba(34, 197, 94, 1)',
                                     borderWidth: 1,
                                     borderRadius: 5,
                                     barThickness: 30
+=======
+                                    backgroundColor: 'rgba(34, 197, 94, 0.3)', // Màu xanh lá nhạt
+                                    borderColor: 'rgba(34, 197, 94, 1)', // Màu xanh lá đậm
+                                    borderWidth: 1,
+                                    borderRadius: 5, // Bo góc cột
+                                    barThickness: 30 // Độ dày cột
+>>>>>>> origin/khoa
                                 },
                                 {
                                     label: 'Chi phí (VND)',
                                     data: data.expenses,
+<<<<<<< HEAD
                                     backgroundColor: 'rgba(239, 68, 68, 0.3)',
                                     borderColor: 'rgba(239, 68, 68, 1)',
+=======
+                                    backgroundColor: 'rgba(239, 68, 68, 0.3)', // Màu đỏ nhạt
+                                    borderColor: 'rgba(239, 68, 68, 1)', // Màu đỏ đậm
+>>>>>>> origin/khoa
                                     borderWidth: 1,
                                     borderRadius: 5,
                                     barThickness: 30
@@ -181,13 +225,22 @@
                                         }
                                     },
                                     grid: {
+<<<<<<< HEAD
                                         color: 'rgba(0, 0, 0, 0.05)'
+=======
+                                        color: 'rgba(0, 0, 0, 0.05)' // Lưới nhạt hơn
+>>>>>>> origin/khoa
                                     },
                                     ticks: {
                                         font: {
                                             size: 12
                                         },
+<<<<<<< HEAD
                                         callback: value => value.toLocaleString('vi-VN') + ' VND'
+=======
+                                        callback: value => value.toLocaleString('vi-VN') +
+                                            ' VND' // Định dạng số
+>>>>>>> origin/khoa
                                     }
                                 },
                                 x: {
@@ -201,7 +254,11 @@
                                     },
                                     grid: {
                                         display: false
+<<<<<<< HEAD
                                     },
+=======
+                                    }, // Ẩn lưới trục x
+>>>>>>> origin/khoa
                                     ticks: {
                                         font: {
                                             size: 12
@@ -243,7 +300,10 @@
                         }
                     });
 
+<<<<<<< HEAD
                     // Biểu đồ đường
+=======
+>>>>>>> origin/khoa
                     const lineCtx = document.getElementById('revenueLineChart').getContext('2d');
                     window.lineChart = new Chart(lineCtx, {
                         type: 'line',
@@ -254,7 +314,11 @@
                                     data: data.revenues,
                                     fill: false,
                                     borderColor: 'rgba(34, 197, 94, 1)',
+<<<<<<< HEAD
                                     backgroundColor: 'rgba(34, 197, 94, 0.5)',
+=======
+                                    backgroundColor: 'rgba(34, 197, 94, 0.5)', // Màu điểm
+>>>>>>> origin/khoa
                                     tension: 0.3,
                                     pointRadius: 5,
                                     pointHoverRadius: 7

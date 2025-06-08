@@ -46,7 +46,10 @@ class FinancialAdminController extends Controller
 
         $financialRecords = $query->orderBy('created_at', 'desc')->paginate(15);
 
+<<<<<<< HEAD
         // Truyền thêm trường commission cho view
+=======
+>>>>>>> origin/khoa
         return view('admin.financial.index', compact('financialRecords', 'departments', 'platforms', 'status'));
     }
 
@@ -62,12 +65,21 @@ class FinancialAdminController extends Controller
 
     public function history()
     {
+<<<<<<< HEAD
         // Lấy các đơn đã được admin phê duyệt, truyền trường commission
         $financialRecords = FinancialRecord::where('status', 'admin_approved')->with(['department', 'platform'])->get();
+=======
+        // Lấy các đơn đã được admin phê duyệt
+        $financialRecords = FinancialRecord::where('status', 'admin_approved')->get();
+>>>>>>> origin/khoa
 
         return view('admin.financial.history', compact('financialRecords'));
     }
 
+<<<<<<< HEAD
+=======
+    // Thêm phương thức này vào controller
+>>>>>>> origin/khoa
     public function setGoal(Request $request)
     {
         $request->validate([
@@ -109,8 +121,12 @@ class FinancialAdminController extends Controller
                 DB::raw('SUM(revenue) as total_revenue'),
                 DB::raw('SUM((SELECT SUM(amount) FROM expenses WHERE expenses.financial_record_id = financial_records.id)) as total_expenses'),
                 DB::raw('AVG(roas) as avg_roas'),
+<<<<<<< HEAD
                 DB::raw('COUNT(*) as record_count'),
                 DB::raw('SUM(commission) as total_commission') // Thêm tổng hoa hồng
+=======
+                DB::raw('COUNT(*) as record_count')
+>>>>>>> origin/khoa
             ])
             ->first();
 
@@ -137,8 +153,12 @@ class FinancialAdminController extends Controller
             DB::raw('SUM(revenue) as total_revenue'),
             DB::raw('SUM((SELECT SUM(amount) FROM expenses WHERE expenses.financial_record_id = financial_records.id)) as total_expenses'),
             DB::raw('AVG(roas) as avg_roas'),
+<<<<<<< HEAD
             DB::raw('COUNT(*) as record_count'),
             DB::raw('SUM(commission) as total_commission') // Thêm tổng hoa hồng
+=======
+            DB::raw('COUNT(*) as record_count')
+>>>>>>> origin/khoa
         ])
             ->first();
 
@@ -169,14 +189,20 @@ class FinancialAdminController extends Controller
         $total_expenses = $totalStats->total_expenses ?? 0;
         $avg_roas = $totalStats->avg_roas ? $totalStats->avg_roas : 0;
         $record_count = $totalStats->record_count ?? 0;
+<<<<<<< HEAD
         $totalCommission = $totalStats->total_commission ?? 0; // Gán tổng hoa hồng
+=======
+>>>>>>> origin/khoa
 
         // 5. Gán giá trị theo bộ lọc
         $filteredTotalRevenue = $filteredStats->total_revenue ?? 0;
         $filteredTotalExpenses = $filteredStats->total_expenses ?? 0;
         $filteredAvgRoas = $filteredStats->avg_roas ? $filteredStats->avg_roas : 0;
         $filteredRecordCount = $filteredStats->record_count ?? 0;
+<<<<<<< HEAD
         $filteredTotalCommission = $filteredStats->total_commission ?? 0; // Gán tổng hoa hồng theo bộ lọc
+=======
+>>>>>>> origin/khoa
 
         // 6. Lấy các bản ghi gần đây
         $recent_records = FinancialRecord::where('status', 'admin_approved')
@@ -233,7 +259,10 @@ class FinancialAdminController extends Controller
                 'filteredTotalExpenses' => $filteredTotalExpenses,
                 'filteredAvgRoas' => $filteredAvgRoas,
                 'filteredRecordCount' => $filteredRecordCount,
+<<<<<<< HEAD
                 'filteredTotalCommission' => $filteredTotalCommission, // Thêm vào JSON
+=======
+>>>>>>> origin/khoa
             ]);
         }
 
@@ -243,12 +272,18 @@ class FinancialAdminController extends Controller
             'total_expenses',
             'avg_roas',
             'record_count',
+<<<<<<< HEAD
             'totalCommission', // Thêm vào compact
+=======
+>>>>>>> origin/khoa
             'filteredTotalRevenue',
             'filteredTotalExpenses',
             'filteredAvgRoas',
             'filteredRecordCount',
+<<<<<<< HEAD
             'filteredTotalCommission', // Thêm vào compact
+=======
+>>>>>>> origin/khoa
             'recent_records',
             'years',
             'labels',

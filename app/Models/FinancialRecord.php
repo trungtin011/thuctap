@@ -10,14 +10,10 @@ class FinancialRecord extends Model
     protected $fillable = [
         'department_id',
         'platform_id',
-        'dai_ly_id',
         'revenue',
         'record_date',
         'record_time',
-        'office_id',
-        'route_id',
         'note',
-        'commission',
         'status',
         'submitted_by',
         'manager_approved_by',
@@ -27,50 +23,44 @@ class FinancialRecord extends Model
     ];
 
     protected $casts = [
-        'status' => 'string', // Hoặc dùng custom Enum nếu Laravel 9+ và có class Enum
+        'status' => 'string',
         'revenue' => 'decimal:2',
         'roas' => 'decimal:2',
         'record_date' => 'date',
-        'record_time' => 'string', // Giữ string vì cột time không cast thành datetime
+        'record_time' => 'string',
     ];
 
-    // Quan hệ với departments
     public function department()
     {
         return $this->belongsTo(Department::class);
     }
 
-    // Quan hệ với platforms
     public function platform()
     {
         return $this->belongsTo(Platform::class);
     }
 
-    // Quan hệ với expenses
     public function expenses()
     {
         return $this->hasMany(Expense::class);
     }
 
-    // Quan hệ với employee (submitted_by)
     public function submittedBy()
     {
         return $this->belongsTo(Employee::class, 'submitted_by');
     }
 
-    // Quan hệ với employee (manager_approved_by)
     public function managerApprovedBy()
     {
         return $this->belongsTo(Employee::class, 'manager_approved_by');
     }
 
-    // Quan hệ với employee (admin_approved_by)
     public function adminApprovedBy()
     {
         return $this->belongsTo(Employee::class, 'admin_approved_by');
     }
 
-    // Lấy metric_values thông qua platform và recorded_at
+    // Lấy metric_values dựa trên platform_id và recorded_at
     public function getMetricValuesAttribute()
     {
         $recordedAt = $this->record_date->format('Y-m-d') . ' ' . $this->record_time;
@@ -85,23 +75,5 @@ class FinancialRecord extends Model
         return Attribute::make(
             get: fn() => json_decode($this->note)->revenue_sources ?? []
         );
-    }
-    public function daiLy()
-    {
-        return $this->belongsTo(DaiLy::class, 'dai_ly_id');
-    }
-    public function route()
-    {
-        return $this->belongsTo(\App\Models\Route::class, 'route_id');
-    }
-
-    public function office()
-    {
-        return $this->belongsTo(Office::class);
-    }
-
-    public function metricValues()
-    {
-        return $this->hasMany(MetricValue::class);
     }
 }

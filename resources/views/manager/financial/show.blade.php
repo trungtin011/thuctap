@@ -35,10 +35,13 @@
                 {{ number_format($financialRecord->revenue) }} VND
             </div>
             <div class="">
+<<<<<<< HEAD
                 <strong><i class="fas fa-hand-holding-usd text-blue-500 mr-2"></i>Hoa hồng:</strong>
                 {{ number_format($financialRecord->commission) }} VND
             </div>
             <div class="">
+=======
+>>>>>>> origin/khoa
                 <strong><i class="fas fa-user text-blue-500 mr-2"></i>Người gửi:</strong>
                 {{ $financialRecord->submittedBy->name ?? 'N/A' }}
             </div>
@@ -71,7 +74,10 @@
                         <th class="border px-4 py-2"><i class="fas fa-desktop mr-1"></i>Nền tảng</th>
                         <th class="border px-4 py-2"><i class="fas fa-money-bill-wave mr-1"></i>Doanh thu</th>
                         <th class="border px-4 py-2"><i class="fas fa-hand-holding-usd mr-1"></i>Tổng chi phí</th>
+<<<<<<< HEAD
                         <th class="border px-4 py-2"><i class="fas fa-hand-holding-usd mr-1"></i>Hoa hồng</th>
+=======
+>>>>>>> origin/khoa
                     </tr>
                 </thead>
                 <tbody>
@@ -84,7 +90,10 @@
                         <td class="border px-4 py-2">{{ $financialRecord->platform->name ?? 'N/A' }}</td>
                         <td class="border px-4 py-2">{{ number_format($financialRecord->revenue) }}</td>
                         <td class="border px-4 py-2">{{ number_format($totalExpense) }}</td>
+<<<<<<< HEAD
                         <td class="border px-4 py-2">{{ number_format($financialRecord->commission) }}</td>
+=======
+>>>>>>> origin/khoa
                     </tr>
                 </tbody>
             </table>
