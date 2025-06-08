@@ -22,4 +22,9 @@ class Expense extends Model
     {
         return $this->belongsTo(ExpenseType::class);
     }
+    public function submittedBy()
+{
+    return $this->belongsTo(User::class, 'submitted_by');
+}
+
 }

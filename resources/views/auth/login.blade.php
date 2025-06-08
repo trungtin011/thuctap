@@ -17,7 +17,7 @@
                 @enderror
             </div>
 
-            <div class="mb-4">
+            <div class="mb-2">
                 <label for="password" class="block text-sm font-medium text-gray-700">Mật khẩu</label>
                 <input type="password" name="password" id="password"
                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 @error('password') border-red-500 @enderror"
@@ -26,11 +26,22 @@
                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                 @enderror
             </div>
+            
+            <div class="mb-2">
+                <a href="" class="text-sm text-blue-600 hover:underline">Quên mật khẩu?</a>
+            </div>
 
             <button type="submit"
                 class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 Đăng nhập
             </button>
+            
+            <!-- Register -->
+            <div class="mt-2">
+                <p class="text-sm text-gray-600">Bạn chưa có tài khoản?
+                    <a href="{{ route('register') }}" class="text-blue-600 hover:underline">Đăng ký</a>
+                </p>
+            </div>
         </form>
     </div>
 @endsection
