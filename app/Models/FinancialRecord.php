@@ -15,6 +15,7 @@ class FinancialRecord extends Model
         'record_date',
         'record_time',
         'office_id',
+        'route_id',
         'note',
         'commission',
         'status',

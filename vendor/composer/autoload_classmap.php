@@ -7,6 +7,7 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'App\\Http\\Controllers\\Admin\\DaiLyController' => $baseDir . '/app/Http/Controllers/Admin/DaiLyController.php',
+    'App\\Http\\Controllers\\Admin\\FieldController' => $baseDir . '/app/Http/Controllers/Admin/FieldController.php',
     'App\\Http\\Controllers\\Admin\\FinancialAdminController' => $baseDir . '/app/Http/Controllers/Admin/FinancialAdminController.php',
     'App\\Http\\Controllers\\Admin\\FinancialTargetController' => $baseDir . '/app/Http/Controllers/Admin/FinancialTargetController.php',
     'App\\Http\\Controllers\\Admin\\PlatformController' => $baseDir . '/app/Http/Controllers/Admin/PlatformController.php',
@@ -31,6 +32,7 @@ return array(
     'App\\Models\\Employee' => $baseDir . '/app/Models/Employee.php',
     'App\\Models\\Expense' => $baseDir . '/app/Models/Expense.php',
     'App\\Models\\ExpenseType' => $baseDir . '/app/Models/ExpenseType.php',
+    'App\\Models\\Field' => $baseDir . '/app/Models/Field.php',
     'App\\Models\\FinancialRecord' => $baseDir . '/app/Models/FinancialRecord.php',
     'App\\Models\\FinancialTarget' => $baseDir . '/app/Models/FinancialTarget.php',
     'App\\Models\\MetricValue' => $baseDir . '/app/Models/MetricValue.php',

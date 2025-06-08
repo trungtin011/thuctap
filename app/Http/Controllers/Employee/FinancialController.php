@@ -15,6 +15,8 @@ use App\Models\PlatformMetric;
 use App\Models\MetricValue;
 use App\Models\Daily;
 use App\Models\Office;
+use App\Models\Route;
+use App\Models\Field;
 
 class FinancialController extends Controller
 {
@@ -30,8 +32,21 @@ class FinancialController extends Controller
         ]);
 
         $query = FinancialRecord::where('submitted_by', $employee->id)
-            ->with(['department', 'platform', 'expenses', 'submittedBy', 'daiLy'])
-            ->orderBy('record_date', 'desc');
+            ->with(['department', 'route', 'expenses']);
+
+        // Nếu không có filter ngày, mặc định lấy tháng hiện tại
+        if (!$request->filled('start_date') && !$request->filled('end_date')) {
+            $currentMonth = now()->startOfMonth();
+            $query->whereYear('record_date', $currentMonth->year)
+                  ->whereMonth('record_date', $currentMonth->month);
+        } else {
+            if ($request->filled('start_date')) {
+                $query->where('record_date', '>=', $request->start_date);
+            }
+            if ($request->filled('end_date')) {
+                $query->where('record_date', '<=', $request->end_date);
+            }
+        }
 
         if ($request->filled('platform_id')) {
             $query->where('platform_id', $request->platform_id);
@@ -41,21 +56,24 @@ class FinancialController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('start_date')) {
-            $query->where('record_date', '>=', $request->start_date);
-        }
+        // Sắp xếp theo ngày ghi và ID
+        $query->orderBy('record_date', 'desc')
+              ->orderBy('id', 'desc');
 
-        if ($request->filled('end_date')) {
-            $query->where('record_date', '<=', $request->end_date);
-        }
+        $financialRecords = $query->paginate(10);
 
-        $financialRecords = $query->paginate(10); // Sử dụng phân trang
         $platforms = Platform::all();
         $expenseTypes = ExpenseType::all();
         $dailies = Daily::all();
         $offices = Office::all();
 
-        return view('employee.financial.index', compact('financialRecords', 'platforms', 'expenseTypes', 'dailies', 'offices'));
+        return view('employee.financial.index', compact(
+            'financialRecords',
+            'platforms',
+            'expenseTypes',
+            'dailies',
+            'offices'
+        ));
     }
 
     public function create()
@@ -65,12 +83,25 @@ class FinancialController extends Controller
         if (!$department) {
             abort(403, 'Bạn không thuộc phòng ban nào.');
         }
-        $platforms = Platform::all();
-        $expenseTypes = ExpenseType::all();
-        $dailies = Daily::all();
-        $offices = Office::all();
 
-        return view('employee.financial.create', compact('department', 'platforms', 'expenseTypes', 'dailies', 'offices'));
+        // Only show routes for non-marketing departments
+        $showRoutes = $department->name !== 'Marketing';
+        $routes = $showRoutes ? Route::all() : collect();
+        
+        // Get fields for the user's department
+        $fields = Field::where('department_id', $employee->department_id)
+            ->orWhereNull('department_id')
+            ->get();
+
+        // Get expense types for marketing department
+        $expenseTypes = ExpenseType::all();
+
+        // Debug information
+        Log::info('Employee Department ID: ' . $employee->department_id);
+        Log::info('Fields count: ' . $fields->count());
+        Log::info('Fields data: ', $fields->toArray());
+
+        return view('employee.financial.create', compact('department', 'routes', 'fields', 'showRoutes', 'expenseTypes'));
     }
 
     public function store(Request $request)
@@ -79,8 +110,10 @@ class FinancialController extends Controller
             Log::info('Store request data:', $request->all());
 
             $employee = Auth::user();
+            $department = Department::find($employee->department_id);
+            $isMarketing = $department->name === 'Marketing';
 
-            $validated = $request->validate([
+            $validationRules = [
                 'department_id' => [
                     'required',
                     'exists:departments,id',
@@ -90,110 +123,82 @@ class FinancialController extends Controller
                         }
                     },
                 ],
-                'platform_id' => 'required|exists:platforms,id',
-                'dai_ly_id' => 'required|exists:dai_lies,id',
-                'office_id' => 'required|exists:offices,id',
-                'metric_values' => 'nullable|array',
-                'metric_values.*.metric_id' => [
-                    'nullable',
-                    'exists:platform_metrics,id',
-                    function ($attribute, $value, $fail) use ($request) {
-                        if ($value && !PlatformMetric::where('id', $value)->where('platform_id', $request->platform_id)->exists()) {
-                            $fail('Chỉ số không thuộc nền tảng đã chọn.');
-                        }
-                    },
-                ],
-                'metric_values.*.value' => [
-                    'nullable',
-                    function ($attribute, $value, $fail) use ($request) {
-                        if ($value === null) return;
-                        $index = explode('.', $attribute)[1];
-                        $metricId = $request->metric_values[$index]['metric_id'] ?? null;
-                        if (!$metricId) return;
-                        $metric = PlatformMetric::find($metricId);
-                        if ($metric->data_type === 'int' && (!is_numeric($value) || floor($value) != $value)) {
-                            $fail('Giá trị phải là số nguyên.');
-                        }
-                        if ($metric->data_type === 'float' && !is_numeric($value)) {
-                            $fail('Giá trị phải là số thực.');
-                        }
-                        if ($metric->data_type === 'string' && !is_string($value)) {
-                            $fail('Giá trị phải là chuỗi.');
-                        }
-                    },
-                ],
-                'metric_values.*.recorded_at' => 'nullable|date',
-                'revenue_sources' => 'required|array|min:1',
-                'revenue_sources.*.source_name' => 'required|string|max:100',
-                'revenue_sources.*.amount' => 'required|numeric|min:0',
-                'record_date' => 'required|date',
-                'record_time' => 'required',
-                'note' => 'nullable|string',
-                'expenses' => 'nullable|array',
-                'expenses.*.expense_type_id' => 'nullable|exists:expense_types,id',
-                'expenses.*.amount' => 'nullable|numeric|min:0',
-                'expenses.*.description' => 'nullable|string|max:255',
-                'commission' => 'nullable|numeric|min:0',
-            ]);
+            ];
+
+            if ($isMarketing) {
+                $validationRules['expenses'] = 'required|array|min:1';
+                $validationRules['expenses.*.expense_type_id'] = 'required|exists:expense_types,id';
+                $validationRules['expenses.*.amount'] = 'required|numeric|min:0';
+                $validationRules['expenses.*.description'] = 'nullable|string|max:255';
+            } else {
+                // Gán 0 cho các amount rỗng hoặc null
+                $revenue_sources = $request->input('revenue_sources', []);
+                foreach ($revenue_sources as &$source) {
+                    if (empty($source['amount'])) {
+                        $source['amount'] = 0;
+                    }
+                }
+                $request->merge(['revenue_sources' => $revenue_sources]);
+
+                $validationRules['revenue_sources'] = 'required|array|min:1';
+                $validationRules['revenue_sources.*.source_name'] = 'required|string|max:100|exists:fields,name';
+                $validationRules['revenue_sources.*.amount'] = 'required|numeric|min:0';
+                $validationRules['route_id'] = 'required|exists:routes,id';
+            }
+
+            $validated = $request->validate($validationRules);
 
             Log::info('Validated data:', $validated);
 
-            $totalRevenue = collect($request->revenue_sources)->sum('amount');
+            $now = now();
+            $totalRevenue = 0;
+            $totalCommission = 0;
+            $note = '';
 
-            $noteData = [
-                'note' => $request->note ?? '',
-                'revenue_sources' => array_map(function ($source) {
-                    return [
-                        'source_name' => mb_convert_encoding($source['source_name'], 'UTF-8', 'UTF-8'),
-                        'amount' => (float) $source['amount'],
-                    ];
-                }, $request->revenue_sources ?? []),
-            ];
-            $note = json_encode($noteData, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+            if (!$isMarketing) {
+                $totalRevenue = collect($request->revenue_sources)->sum('amount');
+                $totalCommission = collect($request->revenue_sources)->sum('commission');
+                $noteData = [
+                    'note' => '',
+                    'revenue_sources' => array_map(function ($source) {
+                        return [
+                            'source_name' => mb_convert_encoding($source['source_name'], 'UTF-8', 'UTF-8'),
+                            'amount' => (float) $source['amount'],
+                            'commission' => (float) ($source['commission'] ?? 0),
+                        ];
+                    }, $request->revenue_sources ?? []),
+                ];
+                $note = json_encode($noteData, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+            }
 
             $financialRecord = FinancialRecord::create([
                 'department_id' => $validated['department_id'],
-                'platform_id' => $validated['platform_id'],
-                'dai_ly_id' => $validated['dai_ly_id'],
-                'office_id' => $validated['office_id'], // Thêm office_id
+                'platform_id' => 1, // Default platform
+                'dai_ly_id' => 1, // Default dai ly
+                'office_id' => 1, // Default office
+                'route_id' => $isMarketing ? null : $validated['route_id'],
                 'revenue' => $totalRevenue,
-                'record_date' => $validated['record_date'],
-                'record_time' => $validated['record_time'],
+                'record_date' => $now->toDateString(),
+                'record_time' => $now->toTimeString(),
                 'note' => $note,
                 'status' => 'pending',
                 'submitted_by' => Auth::id(),
-                'commission' => $validated['commission'] ?? 0,
+                'commission' => $totalCommission,
             ]);
 
-            if ($request->has('expenses') && is_array($request->expenses) && !empty($request->expenses)) {
-                foreach ($request->expenses as $expense) {
-                    if (isset($expense['expense_type_id'], $expense['amount'])) {
-                        Expense::create([
-                            'financial_record_id' => $financialRecord->id,
-                            'expense_type_id' => $expense['expense_type_id'],
-                            'amount' => $expense['amount'],
-                            'description' => $expense['description'] ?? '',
-                        ]);
-                    }
-                }
-            }
-
-            if ($request->has('metric_values') && is_array($request->metric_values) && !empty($request->metric_values)) {
-                foreach ($request->metric_values as $metricValue) {
-                    if (isset($metricValue['metric_id'], $metricValue['value'], $metricValue['recorded_at'])) {
-                        MetricValue::create([
-                            'metric_id' => $metricValue['metric_id'],
-                            'value' => $metricValue['value'],
-                            'recorded_at' => $metricValue['recorded_at'],
-                            'financial_record_id' => $financialRecord->id,
-                        ]);
-                    }
+            if ($isMarketing && isset($validated['expenses'])) {
+                foreach ($validated['expenses'] as $expense) {
+                    $financialRecord->expenses()->create([
+                        'expense_type_id' => $expense['expense_type_id'],
+                        'amount' => $expense['amount'],
+                        'description' => $expense['description'] ?? null,
+                    ]);
                 }
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Bản ghi doanh thu và chi phí đã được thêm thành công.'
+                'message' => $isMarketing ? 'Bản ghi chi phí đã được thêm thành công.' : 'Bản ghi doanh thu đã được thêm thành công.'
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validation error:', $e->errors());
@@ -213,6 +218,9 @@ class FinancialController extends Controller
     public function edit($id)
     {
         $employee = Auth::user();
+        $department = Department::find($employee->department_id);
+        $showRoutes = $department->name !== 'Marketing';
+
         $financialRecord = FinancialRecord::where('id', $id)
             ->where('submitted_by', $employee->id)
             ->with(['expenses', 'department', 'platform', 'daily'])
@@ -222,22 +230,28 @@ class FinancialController extends Controller
             abort(403, 'Bạn chỉ có thể sửa bản ghi đang chờ duyệt.');
         }
 
-        $department = Department::find($employee->department_id);
-        $platforms = Platform::all();
+        $routes = $showRoutes ? Route::all() : collect();
+        
+        // Get fields for the user's department
+        $fields = Field::where('department_id', $employee->department_id)
+            ->orWhereNull('department_id')
+            ->get();
+
+        // Get expense types for marketing department
         $expenseTypes = ExpenseType::all();
-        $dailies = Daily::all();
-        $offices = Office::all();
 
         // Đính kèm revenue_sources từ note
         $financialRecord->revenue_sources = json_decode($financialRecord->note)->revenue_sources ?? [];
 
-        return view('employee.financial.edit', compact('financialRecord', 'department', 'platforms', 'expenseTypes', 'dailies', 'offices'));
+        return view('employee.financial.edit', compact('financialRecord', 'department', 'routes', 'fields', 'showRoutes', 'expenseTypes'));
     }
 
     public function update(Request $request, $id)
     {
         try {
             $employee = Auth::user();
+            $department = Department::find($employee->department_id);
+            $isMarketing = $department->name === 'Marketing';
 
             $financialRecord = FinancialRecord::where('id', $id)
                 ->where('submitted_by', $employee->id)
@@ -250,7 +264,7 @@ class FinancialController extends Controller
                 ], 422);
             }
 
-            $validated = $request->validate([
+            $validationRules = [
                 'department_id' => [
                     'required',
                     'exists:departments,id',
@@ -260,107 +274,79 @@ class FinancialController extends Controller
                         }
                     },
                 ],
-                'platform_id' => 'required|exists:platforms,id',
-                'dai_ly_id' => 'required|exists:dai_lies,id',
-                'office_id' => 'required|exists:offices,id',
-                'metric_values' => 'nullable|array',
-                'metric_values.*.metric_id' => [
-                    'required',
-                    'exists:platform_metrics,id',
-                    function ($attribute, $value, $fail) use ($request) {
-                        if (!PlatformMetric::where('id', $value)->where('platform_id', $request->platform_id)->exists()) {
-                            $fail('Chỉ số không thuộc nền tảng đã chọn.');
-                        }
-                    },
-                ],
-                'metric_values.*.value' => [
-                    'required',
-                    function ($attribute, $value, $fail) use ($request) {
-                        $index = explode('.', $attribute)[1];
-                        $metricId = $request->metric_values[$index]['metric_id'];
-                        $metric = PlatformMetric::find($metricId);
-                        if ($metric->data_type === 'int' && (!is_numeric($value) || floor($value) != $value)) {
-                            $fail('Giá trị phải là số nguyên.');
-                        }
-                        if ($metric->data_type === 'float' && !is_numeric($value)) {
-                            $fail('Giá trị phải là số thực.');
-                        }
-                        if ($metric->data_type === 'string' && !is_string($value)) {
-                            $fail('Giá trị phải là chuỗi.');
-                        }
-                    },
-                ],
-                'metric_values.*.recorded_at' => 'required|date',
-                'revenue_sources' => 'required|array|min:1',
-                'revenue_sources.*.source_name' => 'required|string|max:100',
-                'revenue_sources.*.amount' => 'required|numeric|min:0',
-                'record_date' => 'required|date',
-                'record_time' => 'required',
-                'note' => 'nullable|string',
-                'expenses' => 'nullable|array',
-                'expenses.*.expense_type_id' => 'required|exists:expense_types,id',
-                'expenses.*.amount' => 'required|numeric|min:0',
-                'expenses.*.description' => 'nullable|string|max:255',
-                'commission' => 'nullable|numeric|min:0',
-            ]);
-
-            $totalRevenue = collect($request->revenue_sources)->sum('amount');
-
-            $noteData = [
-                'note' => $request->note ?? '',
-                'revenue_sources' => $request->revenue_sources,
             ];
-            $note = json_encode($noteData);
 
-            $financialRecord->update([
-                'department_id' => $request->department_id,
-                'platform_id' => $request->platform_id,
-                'dai_ly_id' => $request->dai_ly_id,
-                'office_id' => $request->office_id,
-                'revenue' => $totalRevenue,
-                'record_date' => $request->record_date,
-                'record_time' => $request->record_time,
-                'note' => $note,
-                'commission' => $request->commission ?? 0,
-            ]);
-
-            // Xóa chi phí cũ
-            $financialRecord->expenses()->delete();
-
-            // Thêm chi phí mới
-            if ($request->has('expenses')) {
-                foreach ($request->expenses as $expense) {
-                    Expense::create([
-                        'financial_record_id' => $financialRecord->id,
-                        'expense_type_id' => $expense['expense_type_id'],
-                        'amount' => $expense['amount'],
-                        'description' => $expense['description'],
-                    ]);
+            if ($isMarketing) {
+                $validationRules['expenses'] = 'required|array|min:1';
+                $validationRules['expenses.*.expense_type_id'] = 'required|exists:expense_types,id';
+                $validationRules['expenses.*.amount'] = 'required|numeric|min:0';
+                $validationRules['expenses.*.description'] = 'nullable|string|max:255';
+            } else {
+                // Gán 0 cho các amount và commission rỗng hoặc null
+                $revenue_sources = $request->input('revenue_sources', []);
+                foreach ($revenue_sources as &$source) {
+                    if (empty($source['amount'])) {
+                        $source['amount'] = 0;
+                    }
+                    if (empty($source['commission'])) {
+                        $source['commission'] = 0;
+                    }
                 }
+                $request->merge(['revenue_sources' => $revenue_sources]);
+
+                $validationRules['revenue_sources'] = 'required|array|min:1';
+                $validationRules['revenue_sources.*.source_name'] = 'required|string|max:100|exists:fields,name';
+                $validationRules['revenue_sources.*.amount'] = 'required|numeric|min:0';
+                $validationRules['revenue_sources.*.commission'] = 'required|numeric|min:0';
+                $validationRules['route_id'] = 'required|exists:routes,id';
             }
 
-            // Xóa metric_values cũ
-            $oldRecordedAt = $financialRecord->record_date . ' ' . $financialRecord->record_time;
-            MetricValue::whereIn('metric_id', PlatformMetric::where('platform_id', $financialRecord->platform_id)->pluck('id'))
-                ->where('recorded_at', $oldRecordedAt)
-                ->where('financial_record_id', $financialRecord->id)
-                ->delete();
+            $validated = $request->validate($validationRules);
 
-            // Thêm metric_values mới
-            if ($request->has('metric_values')) {
-                foreach ($request->metric_values as $metricValue) {
-                    MetricValue::create([
-                        'metric_id' => $metricValue['metric_id'],
-                        'value' => $metricValue['value'],
-                        'recorded_at' => $metricValue['recorded_at'],
-                        'financial_record_id' => $financialRecord->id,
+            $updateData = [
+                'department_id' => $validated['department_id'],
+            ];
+
+            if (!$isMarketing) {
+                $totalRevenue = collect($request->revenue_sources)->sum('amount');
+                $totalCommission = collect($request->revenue_sources)->sum('commission');
+                $noteData = [
+                    'note' => '',
+                    'revenue_sources' => array_map(function ($source) {
+                        return [
+                            'source_name' => mb_convert_encoding($source['source_name'], 'UTF-8', 'UTF-8'),
+                            'amount' => (float) $source['amount'],
+                            'commission' => (float) ($source['commission'] ?? 0),
+                        ];
+                    }, $request->revenue_sources ?? []),
+                ];
+                $note = json_encode($noteData, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+                $updateData['revenue'] = $totalRevenue;
+                $updateData['commission'] = $totalCommission;
+                $updateData['note'] = $note;
+                $updateData['route_id'] = $validated['route_id'];
+            }
+
+            $financialRecord->update($updateData);
+
+            if ($isMarketing) {
+                // Delete existing expenses
+                $financialRecord->expenses()->delete();
+                
+                // Create new expenses
+                foreach ($validated['expenses'] as $expense) {
+                    $financialRecord->expenses()->create([
+                        'expense_type_id' => $expense['expense_type_id'],
+                        'amount' => $expense['amount'],
+                        'description' => $expense['description'] ?? null,
                     ]);
                 }
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Bản ghi doanh thu và chi phí đã được cập nhật thành công.'
+                'message' => $isMarketing ? 'Bản ghi chi phí đã được cập nhật thành công.' : 'Bản ghi doanh thu đã được cập nhật thành công.'
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validation error:', $e->errors());

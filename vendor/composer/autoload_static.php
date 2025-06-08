@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit88970a0117c062eed55fa8728fc43833
+class ComposerStaticInite45cc0d8cf95588e686aad3d19d3decc
 {
     public static $files = array (
         '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
@@ -523,6 +523,7 @@ class ComposerStaticInit88970a0117c062eed55fa8728fc43833
 
     public static $classMap = array (
         'App\\Http\\Controllers\\Admin\\DaiLyController' => __DIR__ . '/../..' . '/app/Http/Controllers/Admin/DaiLyController.php',
+        'App\\Http\\Controllers\\Admin\\FieldController' => __DIR__ . '/../..' . '/app/Http/Controllers/Admin/FieldController.php',
         'App\\Http\\Controllers\\Admin\\FinancialAdminController' => __DIR__ . '/../..' . '/app/Http/Controllers/Admin/FinancialAdminController.php',
         'App\\Http\\Controllers\\Admin\\FinancialTargetController' => __DIR__ . '/../..' . '/app/Http/Controllers/Admin/FinancialTargetController.php',
         'App\\Http\\Controllers\\Admin\\PlatformController' => __DIR__ . '/../..' . '/app/Http/Controllers/Admin/PlatformController.php',
@@ -547,6 +548,7 @@ class ComposerStaticInit88970a0117c062eed55fa8728fc43833
         'App\\Models\\Employee' => __DIR__ . '/../..' . '/app/Models/Employee.php',
         'App\\Models\\Expense' => __DIR__ . '/../..' . '/app/Models/Expense.php',
         'App\\Models\\ExpenseType' => __DIR__ . '/../..' . '/app/Models/ExpenseType.php',
+        'App\\Models\\Field' => __DIR__ . '/../..' . '/app/Models/Field.php',
         'App\\Models\\FinancialRecord' => __DIR__ . '/../..' . '/app/Models/FinancialRecord.php',
         'App\\Models\\FinancialTarget' => __DIR__ . '/../..' . '/app/Models/FinancialTarget.php',
         'App\\Models\\MetricValue' => __DIR__ . '/../..' . '/app/Models/MetricValue.php',
@@ -6724,9 +6726,9 @@ class ComposerStaticInit88970a0117c062eed55fa8728fc43833
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit88970a0117c062eed55fa8728fc43833::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit88970a0117c062eed55fa8728fc43833::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit88970a0117c062eed55fa8728fc43833::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInite45cc0d8cf95588e686aad3d19d3decc::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInite45cc0d8cf95588e686aad3d19d3decc::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInite45cc0d8cf95588e686aad3d19d3decc::$classMap;
 
         }, null, ClassLoader::class);
     }
