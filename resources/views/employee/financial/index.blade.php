@@ -171,6 +171,29 @@
                                                 @endif
                                             @endforeach
                                         </td>
+                                        <td>{{ $record->platform->name ?? '' }}</td>
+                                        <td>{{ $record->route->name ?? '' }}</td>
+                                        <td>
+                                            @php
+                                                $metrics = $record->platform ? $record->platform->metrics : collect();
+                                                $metricValues = $record->metric_values;
+                                            @endphp
+                                            @if ($metrics->count())
+                                                <ul class="list-group">
+                                                    @foreach ($metrics as $metric)
+                                                        <li class="list-group-item">
+                                                            <strong>{{ $metric->name }}</strong>
+                                                            @php
+                                                                $value = $metricValues->where('metric_id', $metric->id)->first();
+                                                            @endphp
+                                                            : {{ $value ? $value->value : '-' }} {{ $metric->unit }}
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            @else
+                                                <span class="text-muted">Không có trường nào</span>
+                                            @endif
+                                        </td>
                                     @endif
                                     <td>
                                         @switch($record->status)

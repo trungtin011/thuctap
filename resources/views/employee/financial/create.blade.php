@@ -99,6 +99,33 @@
                 @endif
 
                 @if ($isMarketing)
+                    <div class="mb-3">
+                        <label for="route_id" class="form-label">Chọn Tuyến</label>
+                        <select name="route_id" id="route_id" class="form-select" required>
+                            <option value="">-- Chọn tuyến --</option>
+                            @foreach ($routes as $route)
+                                <option value="{{ $route->id }}">{{ $route->name }}</option>
+                            @endforeach
+                        </select>
+                        <div class="invalid-feedback" id="route_id_error"></div>
+                    </div>
+                @endif
+
+                @if ($isMarketing)
+                    <div class="mb-3">
+                        <label for="platform_id" class="form-label">Chọn Nền tảng</label>
+                        <select name="platform_id" id="platform_id" class="form-select" required onchange="showPlatformMetrics()">
+                            <option value="">-- Chọn nền tảng --</option>
+                            @foreach ($platforms as $platform)
+                                <option value="{{ $platform->id }}" data-metrics='@json($platform->metrics)'>{{ $platform->name }}</option>
+                            @endforeach
+                        </select>
+                        <div class="invalid-feedback" id="platform_id_error"></div>
+                    </div>
+                    <div id="platform-metrics-list" class="mb-3"></div>
+                @endif
+
+                @if ($isMarketing)
                     <h6 class="mb-3">Chi Phí</h6>
                     <div id="expense-container">
                         <div class="expense-row mb-3 p-3 border rounded">
@@ -228,6 +255,28 @@
                 expenseIndex++;
             }
         @endif
+
+        function showPlatformMetrics() {
+            const select = document.getElementById('platform_id');
+            const metricsDiv = document.getElementById('platform-metrics-list');
+            const selected = select.options[select.selectedIndex];
+            let metrics = [];
+            try {
+                metrics = JSON.parse(selected.getAttribute('data-metrics')) || [];
+            } catch (e) {}
+            if (metrics.length > 0) {
+                let html = '<label class="form-label">Nhập dữ liệu các trường của nền tảng:</label>';
+                metrics.forEach((m, idx) => {
+                    html += `<div class=\"mb-2\">` +
+                        `<label class=\"form-label\">${m.name} (${m.unit || ''}, ${m.data_type || ''})</label>` +
+                        `<input type=\"text\" name=\"metrics[${m.id}]\" class=\"form-control\" placeholder=\"Nhập giá trị\">` +
+                        `</div>`;
+                });
+                metricsDiv.innerHTML = html;
+            } else {
+                metricsDiv.innerHTML = '';
+            }
+        }
 
         document.getElementById('financialForm').addEventListener('submit', function(e) {
             e.preventDefault();

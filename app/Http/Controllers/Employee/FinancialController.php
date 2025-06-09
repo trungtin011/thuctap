@@ -178,7 +178,9 @@ class FinancialController extends Controller
         $isAccountant = $employee->department->name === 'Kế toán';
         $isBusiness = $employee->department->name === 'Kinh doanh';
 
-        $routes = !$isMarketing && !$isAccountant ? Route::all() : collect([]);
+        // Thêm truyền platforms và routes cho Marketing
+        $platforms = $isMarketing ? Platform::all() : collect([]);
+        $routes = $isMarketing ? Route::all() : (!$isAccountant ? Route::all() : collect([]));
         $fields = !$isAccountant ? Field::where('department_id', $employee->department_id)
             ->orWhereNull('department_id')
             ->get() : collect([]);
@@ -189,7 +191,8 @@ class FinancialController extends Controller
             'routes',
             'fields',
             'offices',
-            'expenseTypes'
+            'expenseTypes',
+            'platforms' // truyền platforms cho view
         ));
     }
 
@@ -217,6 +220,8 @@ class FinancialController extends Controller
             ];
 
             if ($isMarketing) {
+                $validationRules['platform_id'] = 'required|exists:platforms,id';
+                $validationRules['route_id'] = 'required|exists:routes,id';
                 $validationRules['expenses'] = 'required|array|min:1';
                 $validationRules['expenses.*.expense_type_id'] = 'required|exists:expense_types,id';
                 $validationRules['expenses.*.amount'] = 'required|numeric|min:0';
@@ -284,20 +289,48 @@ class FinancialController extends Controller
                 $note = json_encode($noteData, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
             }
 
-            $financialRecord = FinancialRecord::create([
-                'department_id' => $validated['department_id'],
-                'platform_id' => 1, // Default platform
-                'dai_ly_id' => 1, // Default dai ly
-                'office_id' => 1, // Default office
-                'route_id' => $isMarketing || $isAccountant ? null : $validated['route_id'],
-                'revenue' => $totalRevenue,
-                'record_date' => $now->toDateString(),
-                'record_time' => $now->toTimeString(),
-                'note' => $note,
-                'status' => 'pending',
-                'submitted_by' => Auth::id(),
-                'commission' => $totalCommission,
-            ]);
+            if ($isMarketing) {
+                $financialRecord = FinancialRecord::create([
+                    'department_id' => $validated['department_id'],
+                    'platform_id' => $validated['platform_id'],
+                    'route_id' => $validated['route_id'],
+                    'dai_ly_id' => 1, // Default dai ly
+                    'office_id' => 1, // Default office
+                    'revenue' => 0,
+                    'record_date' => $now->toDateString(),
+                    'record_time' => $now->toTimeString(),
+                    'note' => '',
+                    'status' => 'pending',
+                    'submitted_by' => Auth::id(),
+                    'commission' => 0,
+                ]);
+                // Lưu metrics
+                if ($request->has('metrics')) {
+                    foreach ($request->input('metrics') as $metricId => $value) {
+                        MetricValue::create([
+                            'metric_id' => $metricId,
+                            'financial_record_id' => $financialRecord->id,
+                            'value' => $value,
+                            'recorded_at' => $now->toDateString() . ' ' . $now->toTimeString(),
+                        ]);
+                    }
+                }
+            } else {
+                $financialRecord = FinancialRecord::create([
+                    'department_id' => $validated['department_id'],
+                    'platform_id' => 1, // Default platform
+                    'dai_ly_id' => 1, // Default dai ly
+                    'office_id' => 1, // Default office
+                    'route_id' => $isMarketing || $isAccountant ? null : $validated['route_id'],
+                    'revenue' => $totalRevenue,
+                    'record_date' => $now->toDateString(),
+                    'record_time' => $now->toTimeString(),
+                    'note' => $note,
+                    'status' => 'pending',
+                    'submitted_by' => Auth::id(),
+                    'commission' => $totalCommission,
+                ]);
+            }
 
             if ($isMarketing && isset($validated['expenses'])) {
                 foreach ($validated['expenses'] as $expense) {
@@ -393,6 +426,8 @@ class FinancialController extends Controller
             ];
 
             if ($isMarketing) {
+                $validationRules['platform_id'] = 'required|exists:platforms,id';
+                $validationRules['route_id'] = 'required|exists:routes,id';
                 $validationRules['expenses'] = 'required|array|min:1';
                 $validationRules['expenses.*.expense_type_id'] = 'required|exists:expense_types,id';
                 $validationRules['expenses.*.amount'] = 'required|numeric|min:0';
