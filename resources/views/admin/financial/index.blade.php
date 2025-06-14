@@ -84,7 +84,6 @@
                         <tr>
                             <th scope="col" class="px-6 py-3 bg-white">ID</th>
                             <th scope="col" class="px-6 py-3 bg-white">Phòng ban</th>
-                            <th scope="col" class="px-6 py-3 bg-white">Nền tảng</th>
                             <th scope="col" class="px-6 py-3 bg-white">Doanh thu</th>
                             <th scope="col" class="px-6 py-3 bg-white">Hoa hồng</th>
                             <th scope="col" class="px-6 py-3 bg-white">Trạng thái</th>
@@ -97,7 +96,7 @@
                                 <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ $record->id }}
                                 </td>
                                 <td class="px-6 py-4">{{ $record->department->name ?? 'N/A' }}</td>
-                                <td class="px-6 py-4">{{ $record->platform->name ?? 'N/A' }}</td>
+                          
                                 <td class="px-6 py-4">{{ number_format($record->revenue) }} VND</td>
                                 <td class="px-6 py-4 text-blue-600 font-bold">{{ number_format($record->commission, 2) }}
                                     VND</td>

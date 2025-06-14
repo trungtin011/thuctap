@@ -104,4 +104,13 @@ class FinancialRecord extends Model
     {
         return $this->hasMany(MetricValue::class);
     }
+
+
+    public function dai_ly()
+    {
+        return $this->belongsTo(DaiLy::class, 'dai_ly_id');
+    }
+
+
+ 
 }

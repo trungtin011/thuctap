@@ -19,6 +19,7 @@ use App\Http\Controllers\OfficeRevenueController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\OfficeController;
 use App\Http\Controllers\Admin\FieldController;
+use App\Http\Controllers\Manager\MarketingFinancialController;
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -59,6 +60,16 @@ Route::middleware(['check.role:admin,manager'])->group(function () {
         Route::post('/financial/{id}/reject', [FinancialApprovalController::class, 'reject'])->name('manager.financial.reject');
     });
 });
+
+
+
+ Route::prefix('manager/marketing')->group(function () {
+         Route::get('/marketing', [MarketingFinancialController::class, 'index'])->name('manager.marketing.index');
+    Route::get('/marketing/{id}', [MarketingFinancialController::class, 'show'])->name('manager.marketing.show');
+    Route::post('/marketing/{id}/approve', [MarketingFinancialController::class, 'approve'])->name('manager.marketing.approve');
+    Route::post('/marketing/{id}/reject', [MarketingFinancialController::class, 'reject'])->name('manager.marketing.reject');
+    });
+
 
 Route::middleware(['check.role:admin'])->group(function () {
     Route::get('dashboard', [FinancialAdminController::class, 'totalRevenue'])->name('dashboard');
@@ -148,6 +159,9 @@ Route::middleware(['check.role:admin'])->group(function () {
     Route::resource('trips', TripController::class)->except(['show']);
     // Thêm quản lý văn phòng (office)
     Route::resource('offices', OfficeController::class)->except(['show']);
+
+
+   
 });
 
 Route::prefix('employee/financial')->group(function () {

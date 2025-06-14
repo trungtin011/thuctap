@@ -196,6 +196,15 @@
                         Quản lý bản ghi
                     </a>
                 </nav>
+                 <nav class="flex-1 p-4 space-y-2">
+                    <a href="{{ route('manager.marketing.index') }}"
+                        class="block px-3 py-2 rounded hover:bg-indigo-800 font-semibold text-yellow-300 transition duration-200">
+                        <i class="mr-2">
+                            <span class="fas fa-money-check-alt"></span>
+                        </i>
+                        Quản lý bản ghi
+                    </a>
+                </nav>
 
                 <div class="p-4 border-t border-indigo-800 mt-auto">
                     <div class="mb-2">{{ Auth::user()->name }}</div>
