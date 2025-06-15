@@ -15,18 +15,18 @@
             <div class="mb-3 row">
                 @if (!$isMarketing)
                     @if ($isAccountant)
-                        <div class="col-md-3"><strong>Tổng tiền mặt:</strong> {{ number_format($totalRevenue, 2) }} VNĐ</div>
+                        <div class="col-md-3"><strong>Tổng tiền mặt:</strong> {{ number_format($totalRevenue) }} VNĐ</div>
                     @endif
                     @if (!$isAccountant)
-                        <div class="col-md-3"><strong>Tổng doanh thu:</strong> {{ number_format($totalRevenue, 2) }} VNĐ
+                        <div class="col-md-3"><strong>Tổng doanh thu:</strong> {{ number_format($totalRevenue) }} VNĐ
                         </div>
-                        <div class="col-md-3"><strong>Tổng hoa hồng:</strong> {{ number_format($totalCommission, 2) }} VNĐ
+                        <div class="col-md-3"><strong>Tổng hoa hồng:</strong> {{ number_format($totalCommission) }} VNĐ
                         </div>
                     @endif
                     @if ($isAccountant)
-                        <div class="col-md-3"><strong>Tổng chuyển khoản:</strong> {{ number_format($totalTransfer, 2) }} VNĐ
+                        <div class="col-md-3"><strong>Tổng chuyển khoản:</strong> {{ number_format($totalTransfer) }} VNĐ
                         </div>
-                        <div class="col-md-3"><strong>Tổng chi:</strong> {{ number_format($totalExpenseTotal, 2) }} VNĐ</div>
+                        <div class="col-md-3"><strong>Tổng chi:</strong> {{ number_format($totalExpenseTotal) }} VNĐ</div>
                         <div class="col-md-3"><strong>Tổng dt phòng hàng:</strong>
                             {{ number_format($totalExpenseTotal + $totalTransfer + $totalRevenue) }} VNĐ</div>
                     @endif
@@ -48,9 +48,9 @@
                                         @foreach ($revenueBySource as $source => $amount)
                                             <tr>
                                                 <td>{{ $source }}</td>
-                                                <td>{{ number_format($amount, 2) }} VNĐ</td>
+                                                <td>{{ number_format($amount) }} VNĐ</td>
                                                 @if (!$isAccountant)
-                                                    <td>{{ number_format($commissionBySource[$source], 2) }} VNĐ</td>
+                                                    <td>{{ number_format($commissionBySource[$source]) }} VNĐ</td>
                                                 @endif
                                             </tr>
                                         @endforeach
@@ -61,7 +61,7 @@
                     @endif
                 @endif
                 @if ($isMarketing)
-                    <div class="col-md-6"><strong>Tổng chi phí:</strong> {{ number_format($totalExpense, 2) }} VNĐ</div>
+                    <div class="col-md-6"><strong>Tổng chi phí:</strong> {{ number_format($totalExpense) }} VNĐ</div>
                 @endif
                 <div class="col-md-3"><strong>Số bản ghi:</strong> {{ $recordCount }}</div>
             </div>
@@ -139,33 +139,33 @@
                                         <td>{{ $record->route->name ?? 'N/A' }}</td>
                                     @endif
                                     @if (!$isMarketing)
-                                        <td>{{ number_format($record->revenue, 2) }}</td>
+                                        <td>{{ number_format($record->revenue) }}</td>
                                         @if (!$isAccountant)
-                                            <td>{{ number_format($record->commission, 2) }}</td>
+                                            <td>{{ number_format($record->commission) }}</td>
                                         @endif
                                         @if ($isAccountant)
-                                            <td>{{ number_format($transferTotal, 2) }}</td>
-                                            <td>{{ number_format($expenseTotal, 2) }}</td>
+                                            <td>{{ number_format($transferTotal) }}</td>
+                                            <td>{{ number_format($expenseTotal) }}</td>
                                         @endif
                                         <td>
                                             @php
                                                 $revenueSources = $noteData->revenue_sources ?? [];
                                             @endphp
                                             @foreach ($revenueSources as $source)
-                                                <div>{{ $source->source_name }}: {{ number_format($source->amount, 2) }}
+                                                <div>{{ $source->source_name }}: {{ number_format($source->amount) }}
                                                     @if (!$isAccountant && isset($source->commission))
-                                                        (HH: {{ number_format($source->commission, 2) }})
+                                                        (HH: {{ number_format($source->commission) }})
                                                     @endif
                                                 </div>
                                             @endforeach
                                         </td>
                                     @endif
                                     @if ($isMarketing)
-                                        <td>{{ number_format($record->expenses->sum('amount'), 2) }}</td>
+                                        <td>{{ number_format($record->expenses->sum('amount')) }}</td>
                                         <td>
                                             @foreach ($record->expenses as $expense)
                                                 <div>{{ $expense->expenseType->name }}:
-                                                    {{ number_format($expense->amount, 2) }}</div>
+                                                    {{ number_format($expense->amount) }}</div>
                                                 @if ($expense->description)
                                                     <small class="text-muted">{{ $expense->description }}</small>
                                                 @endif
