@@ -61,14 +61,12 @@ Route::middleware(['check.role:admin,manager'])->group(function () {
     });
 });
 
-
-
- Route::prefix('manager/marketing')->group(function () {
-         Route::get('/marketing', [MarketingFinancialController::class, 'index'])->name('manager.marketing.index');
+Route::prefix('manager/marketing')->group(function () {
+    Route::get('/marketing', [MarketingFinancialController::class, 'index'])->name('manager.marketing.index');
     Route::get('/marketing/{id}', [MarketingFinancialController::class, 'show'])->name('manager.marketing.show');
     Route::post('/marketing/{id}/approve', [MarketingFinancialController::class, 'approve'])->name('manager.marketing.approve');
     Route::post('/marketing/{id}/reject', [MarketingFinancialController::class, 'reject'])->name('manager.marketing.reject');
-    });
+});
 
 
 Route::middleware(['check.role:admin'])->group(function () {
@@ -159,30 +157,35 @@ Route::middleware(['check.role:admin'])->group(function () {
     Route::resource('trips', TripController::class)->except(['show']);
     // Thêm quản lý văn phòng (office)
     Route::resource('offices', OfficeController::class)->except(['show']);
-
-
-   
 });
 
-Route::prefix('employee/financial')->group(function () {
-    // Danh sách bản ghi
-    Route::get('/', [FinancialController::class, 'index'])->name('employee.financial.index');
+Route::middleware(['auth'])->prefix('employee/financial')->name('employee.financial.')->group(function () {
+    // Shared index for all departments
+    Route::get('/', [FinancialController::class, 'index'])->name('index');
 
-    // Tạo bản ghi mới
-    Route::get('/create', [FinancialController::class, 'create'])->name('employee.financial.create');
-    Route::post('/', [FinancialController::class, 'store'])->name('employee.financial.store');
+    // Marketing routes
+    Route::get('/marketing/create', [FinancialController::class, 'createMarketing'])->name('create.marketing');
+    Route::post('/marketing/store', [FinancialController::class, 'storeMarketing'])->name('store.marketing');
+    Route::get('/marketing/{id}/edit', [FinancialController::class, 'editMarketing'])->name('edit.marketing');
+    Route::put('/marketing/{id}', [FinancialController::class, 'updateMarketing'])->name('update.marketing');
 
-    // Chỉnh sửa và cập nhật bản ghi
-    Route::get('/{id}/edit', [FinancialController::class, 'edit'])->name('employee.financial.edit');
-    Route::put('/{id}', [FinancialController::class, 'update'])->name('employee.financial.update');
+    // Accounting routes
+    Route::get('/accounting/create', [FinancialController::class, 'createAccounting'])->name('create.accounting');
+    Route::post('/accounting/store', [FinancialController::class, 'storeAccounting'])->name('store.accounting');
+    Route::get('/accounting/{id}/edit', [FinancialController::class, 'editAccounting'])->name('edit.accounting');
+    Route::put('/accounting/{id}', [FinancialController::class, 'updateAccounting'])->name('update.accounting');
 
-    // Xóa bản ghi
-    Route::delete('/{id}', [FinancialController::class, 'destroy'])->name('employee.financial.destroy');
+    // Business routes
+    Route::get('/business/create', [FinancialController::class, 'createBusiness'])->name('create.business');
+    Route::post('/business/store', [FinancialController::class, 'storeBusiness'])->name('store.business');
+    Route::get('/business/{id}/edit', [FinancialController::class, 'editBusiness'])->name('edit.business');
+    Route::put('/business/{id}', [FinancialController::class, 'updateBusiness'])->name('update.business');
 
-    // Lấy chỉ số và giá trị chỉ số
-    Route::get('/get-metrics/{platformId}', [FinancialController::class, 'getMetrics'])->name('financial.get_metrics');
-    Route::get('/get-metric-values/{metricId}', [FinancialController::class, 'getMetricValues'])->name('financial.get_metric_values');
-    Route::get('/get-record-metric-values/{recordId}', [FinancialController::class, 'getMetricValuesForRecord'])->name('financial.get_record_metric_values');
+    // Shared routes
+    Route::delete('/{id}', [FinancialController::class, 'destroy'])->name('destroy');
+    Route::get('/get-metrics/{platformId}', [FinancialController::class, 'getMetrics'])->name('get_metrics');
+    Route::get('/get-metric-values/{metricId}', [FinancialController::class, 'getMetricValues'])->name('get_metric_values');
+    Route::get('/get-record-metric-values/{recordId}', [FinancialController::class, 'getMetricValuesForRecord'])->name('get_record_metric_values');
 });
 
 
