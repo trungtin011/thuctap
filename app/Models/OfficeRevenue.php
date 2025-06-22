@@ -5,13 +5,36 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 class OfficeRevenue extends Model
-{
-    protected $fillable = ['cash', 'bank_transfer', 'expense', 'total', 'record_date'];
 
-    // Thêm quan hệ với Office
+
+{
+    protected $fillable = [
+        'cash',
+        'bank_transfer',
+        'expense',
+        'total',
+        'status',
+        'reject_reason',
+        'record_date',
+        'department_id',
+        'submitted_by',
+    ];
+
     public function offices()
     {
         return $this->belongsToMany(Office::class, 'office_revenue_offices')
-            ->withPivot('value'); // Chỉ định cột value từ bảng pivot
+                    ->withPivot('value');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function submittedBy()
+    {
+        return $this->belongsTo(Employee::class, 'submitted_by');
     }
 }
+    
+

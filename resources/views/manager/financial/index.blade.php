@@ -5,7 +5,14 @@
 @section('content')
     <div class="container-fluid px-4">
         <h1 class="mt-4">Bản ghi đang chờ duyệt</h1>
-        <div class="mb-4 text-gray-600 italic">Dưới đây là danh sách các bản ghi chưa được phê duyệt của nhân viên Kinh Doanh. Vui lòng xem xét và duyệt từng bản ghi.</div>
+        <div class="mb-4 text-gray-600 italic">Danh sách các bản ghi chưa được phê duyệt từ nhân viên Kinh Doanh. Vui lòng xem xét chi tiết từng bản ghi.</div>
+
+        @if (session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+        @if (session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
 
         @if ($pendingRecords->count() > 0)
             <div class="overflow-x-auto">
@@ -16,9 +23,9 @@
                             <th class="border px-4 py-2">Phòng ban</th>
                             <th class="border px-4 py-2">Ngày</th>
                             <th class="border px-4 py-2">Tuyến</th>
+                            <th class="border px-4 py-2">Đại lý</th>
                             <th class="border px-4 py-2">Doanh thu</th>
                             <th class="border px-4 py-2">Hoa hồng</th>
-                            <th class="border px-4 py-2">Tuyến</th> <!-- Thay "Nguồn doanh thu" bằng "Tuyến" -->
                             <th class="border px-4 py-2">Người gửi</th>
                             <th class="border px-4 py-2">Hành động</th>
                         </tr>
@@ -29,15 +36,15 @@
                                 <td class="border px-4 py-2">{{ $record->id }}</td>
                                 <td class="border px-4 py-2">{{ $record->department->name ?? 'N/A' }}</td>
                                 <td class="border px-4 py-2">{{ \Carbon\Carbon::parse($record->record_date)->format('d/m/Y') }}</td>
-                                <td class="border px-4 py-2">{{ $record->route ? $record->route->name : 'N/A' }}</td>
-                                <td class="border px-4 py-2">{{ number_format($record->revenue) }} VND</td>
-                                <td class="border px-4 py-2">{{ number_format($record->commission) }} VND</td>
-                                <td class="border px-4 py-2">{{ $record->route ? $record->route->name : 'N/A' }}</td> <!-- Lặp lại tuyến -->
+                                <td class="border px-4 py-2">{{ $record->route->name ?? 'N/A' }}</td>
+                                <td class="border px-4 py-2">{{ $record->daiLy->ten_dai_ly ?? 'N/A' }}</td>
+                                <td class="border px-4 py-2">{{ number_format($record->revenue, 0, ',', '.') }} VND</td>
+                                <td class="border px-4 py-2">{{ number_format($record->commission, 0, ',', '.') }} VND</td>
                                 <td class="border px-4 py-2">{{ $record->submittedBy->name ?? 'N/A' }}</td>
                                 <td class="border px-4 py-2 text-end">
                                     <a href="{{ route('manager.financial.show', $record->id) }}"
                                        class="btn btn-sm btn-primary">
-                                        <i class="fas fa-eye" title="Xem bản ghi"></i>
+                                        <i class="fas fa-eye" title="Xem bản ghi"></i> Xem
                                     </a>
                                 </td>
                             </tr>

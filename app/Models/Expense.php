@@ -6,13 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Expense extends Model
 {
-    protected $fillable = [
+ protected $fillable = [
         'financial_record_id',
         'expense_type_id',
         'amount',
         'description',
+        'status',
+        'reject_reason',
     ];
-
     public function financialRecord()
     {
         return $this->belongsTo(FinancialRecord::class);
@@ -26,5 +27,6 @@ class Expense extends Model
 {
     return $this->belongsTo(User::class, 'submitted_by');
 }
+
 
 }

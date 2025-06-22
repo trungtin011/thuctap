@@ -193,16 +193,25 @@
                         <i class="mr-2">
                             <span class="fas fa-money-check-alt"></span>
                         </i>
-                        Quản lý bản ghi
+                        phê duyệt kinh doanh
                     </a>
                 </nav>
                  <nav class="flex-1 p-4 space-y-2">
-                    <a href="{{ route('manager.marketing.index') }}"
+                    <a href="{{ route('manager.expenses.index') }}"
                         class="block px-3 py-2 rounded hover:bg-indigo-800 font-semibold text-yellow-300 transition duration-200">
                         <i class="mr-2">
                             <span class="fas fa-money-check-alt"></span>
                         </i>
-                        Quản lý bản ghi
+                        phê duyệt maketing
+                    </a>
+                </nav>
+                  <nav class="flex-1 p-4 space-y-2">
+                    <a href="{{ route('manager.office_revenues.index') }}"
+                        class="block px-3 py-2 rounded hover:bg-indigo-800 font-semibold text-yellow-300 transition duration-200">
+                        <i class="mr-2">
+                            <span class="fas fa-money-check-alt"></span>
+                        </i>
+                        phê duyệt kế toán
                     </a>
                 </nav>
 

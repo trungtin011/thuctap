@@ -1,56 +1,59 @@
-@extends('layouts.admin')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch sử tài chính</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Lịch sử tài chính</h1>
 
-@section('title', 'Lịch sử đơn đã được admin phê duyệt')
+        <!-- Records Table -->
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Loại</th>
+                        <th>Phòng ban</th>
+                        <th>Nền tảng</th>
+                        <th>Ngày</th>
+                        <th>Người gửi</th>
+                        <th>Số tiền</th>
+                        <th>Hoa hồng</th>
+                        <th>Mô tả</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($records as $record)
+                        <tr>
+                            <td>{{ $record['id'] }}</td>
+                            <td>{{ ucfirst(str_replace('_', ' ', $record['type'])) }}</td>
+                            <td>{{ $record['department'] }}</td>
+                            <td>{{ $record['platform'] }}</td>
+                            <td>{{ \Carbon\Carbon::parse($record['record_date'])->format('d/m/Y') }}</td>
+                            <td>{{ $record['submitted_by'] }}</td>
+                            <td>{{ number_format($record['amount'], 2) }}</td>
+                            <td>{{ number_format($record['commission'], 2) }}</td>
+                            <td>{{ $record['description'] }}</td>
+                            <td>{{ ucfirst(str_replace('_', ' ', $record['status'])) }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="10" class="text-center">Không tìm thấy bản ghi.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
-@section('content')
-<div style="max-width:1000px;margin:0 auto;">
-    <h2 style="margin: 24px 0 18px 0; text-align:center;">Lịch sử đơn đã được admin phê duyệt</h2>
-
-    @php
-        $total = $financialRecords->sum('revenue');
-    @endphp
-
-    <div style="margin-bottom: 18px; text-align:center;">
-        <span style="font-size: 1.15em; font-weight: bold; color: #28a745;">
-            Tổng doanh thu đã duyệt: {{ number_format($total) }} VNĐ
-        </span>
+        <!-- Back Button -->
+        <a href="{{ route('admin.financial.index') }}" class="btn btn-primary mt-3">Quay lại danh sách</a>
     </div>
 
-    @if($financialRecords->isEmpty())
-        <div style="color:#888;text-align:center;margin:32px 0;">Không có đơn nào đã được phê duyệt.</div>
-    @else
-    <div style="overflow-x:auto;">
-    <table style="width:100%;margin-bottom:24px;border-collapse:collapse;background:#fff;box-shadow:0 2px 8px #eee;">
-        <thead>
-            <tr style="background:#f0f0f0;">
-                <th style="padding:10px 12px;">ID</th>
-                <th style="padding:10px 12px;">Phòng ban</th>
-                <th style="padding:10px 12px;">Nền tảng</th>
-                <th style="padding:10px 12px;">Doanh thu</th>
-                <th style="padding:10px 12px;">Hoa hồng</th>
-                <th style="padding:10px 12px;">Trạng thái</th>
-                <th style="padding:10px 12px;">Ngày phê duyệt</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($financialRecords as $record)
-                <tr>
-                    <td style="padding:8px 12px;">{{ $record->id }}</td>
-                    <td style="padding:8px 12px;">{{ $record->department->name ?? 'N/A' }}</td>
-                    <td style="padding:8px 12px;">{{ $record->platform->name ?? 'N/A' }}</td>
-                    <td style="padding:8px 12px;">{{ number_format($record->revenue) }} VNĐ</td>
-                    <td style="padding:8px 12px; color:#007bff; font-weight:bold;">{{ number_format($record->commission, 2) }} VNĐ</td>
-                    <td style="padding:8px 12px;">
-                        <span style="padding:4px 10px;border-radius:12px;font-size:0.95em;color:#fff;background:#28a745;">
-                            Admin đã duyệt
-                        </span>
-                    </td>
-                    <td style="padding:8px 12px;">{{ $record->updated_at ? $record->updated_at->format('d/m/Y H:i') : '' }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-    </div>
-    @endif
-</div>
-@endsection
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
