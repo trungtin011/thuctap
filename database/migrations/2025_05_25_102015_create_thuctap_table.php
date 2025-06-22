@@ -273,16 +273,16 @@ return new class extends Migration
             $table->timestamps();
         });
 
-   Schema::create('fields', function (Blueprint $table) {
-    $table->id();
-    $table->string('name')->unique();
-    $table->string('slug')->unique();
-    $table->string('type');
-    $table->boolean('required')->default(false);
-    $table->unsignedBigInteger('department_id')->nullable(); // Đặt ngay sau required, không cần after()
-    $table->foreign('department_id')->references('id')->on('departments')->onDelete('set null');
-    $table->timestamps();
-});
+        Schema::create('fields', function (Blueprint $table) {
+            $table->id();
+            $table->string('name')->unique();
+            $table->string('slug')->unique();
+            $table->string('type');
+            $table->boolean('required')->default(false);
+            $table->unsignedBigInteger('department_id')->nullable(); // Đặt ngay sau required, không cần after()
+            $table->foreign('department_id')->references('id')->on('departments')->onDelete('set null');
+            $table->timestamps();
+        });
         // Chèn dữ liệu mẫu
         $this->seedData();
     }

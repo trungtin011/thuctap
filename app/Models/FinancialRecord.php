@@ -24,72 +24,53 @@ class FinancialRecord extends Model
         'admin_approved_by',
         'manager_note',
         'admin_note',
+        'roas', // Thêm roas vào fillable
     ];
 
     protected $casts = [
-        'status' => 'string', // Hoặc dùng custom Enum nếu Laravel 9+ và có class Enum
+        'status' => 'string',
         'revenue' => 'decimal:2',
         'roas' => 'decimal:2',
         'record_date' => 'date',
-        'record_time' => 'string', // Giữ string vì cột time không cast thành datetime
+        'record_time' => 'string',
     ];
 
-    // Quan hệ với departments
+    // Quan hệ
     public function department()
     {
         return $this->belongsTo(Department::class);
     }
 
-    // Quan hệ với platforms
     public function platform()
     {
         return $this->belongsTo(Platform::class);
     }
 
-    // Quan hệ với expenses
     public function expenses()
     {
         return $this->hasMany(Expense::class);
     }
 
-    // Quan hệ với employee (submitted_by)
     public function submittedBy()
     {
         return $this->belongsTo(Employee::class, 'submitted_by');
     }
 
-    // Quan hệ với employee (manager_approved_by)
     public function managerApprovedBy()
     {
         return $this->belongsTo(Employee::class, 'manager_approved_by');
     }
 
-    // Quan hệ với employee (admin_approved_by)
     public function adminApprovedBy()
     {
         return $this->belongsTo(Employee::class, 'admin_approved_by');
     }
 
-    // Lấy metric_values thông qua platform và recorded_at
-    public function getMetricValuesAttribute()
-    {
-        $recordedAt = $this->record_date->format('Y-m-d') . ' ' . $this->record_time;
-        return MetricValue::whereIn('metric_id', $this->platform->metrics->pluck('id'))
-            ->where('recorded_at', $recordedAt)
-            ->get();
-    }
-
-    // Accessor cho revenue_sources
-    protected function revenueSources(): Attribute
-    {
-        return Attribute::make(
-            get: fn() => json_decode($this->note)->revenue_sources ?? []
-        );
-    }
     public function daiLy()
     {
         return $this->belongsTo(DaiLy::class, 'dai_ly_id');
     }
+
     public function route()
     {
         return $this->belongsTo(\App\Models\Route::class, 'route_id');
@@ -102,15 +83,22 @@ class FinancialRecord extends Model
 
     public function metricValues()
     {
-        return $this->hasMany(MetricValue::class);
+        return $this->hasMany(MetricValue::class, 'financial_record_id');
     }
 
-
-    public function dai_ly()
+    // Accessor cho revenue_sources
+    protected function revenueSources(): Attribute
     {
-        return $this->belongsTo(DaiLy::class, 'dai_ly_id');
+        return Attribute::make(
+            get: fn() => json_decode($this->note, true)['revenue_sources'] ?? []
+        );
     }
 
-
- 
+    // Accessor để lấy metric_values từ database
+    protected function metricValuesAttribute(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->metricValues->keyBy('metric_id')->map->value->toArray()
+        );
+    }
 }

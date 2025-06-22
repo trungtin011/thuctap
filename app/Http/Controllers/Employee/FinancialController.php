@@ -33,8 +33,8 @@ class FinancialController extends Controller
                 'end_date' => 'nullable|date|after_or_equal:start_date',
             ]);
 
-            if ($departmentName === 'Kế toán') {
-                $query = OfficeRevenue::query()->with(['office']);
+            if ($departmentName === 'Kế Toán') {
+                $query = OfficeRevenue::query()->with(['offices']); // Lấy cả các office liên kết
             } else {
                 $query = FinancialRecord::where('submitted_by', $employee->id)
                     ->with(['department', 'route', 'expenses', 'platform']);
@@ -54,11 +54,11 @@ class FinancialController extends Controller
                 }
             }
 
-            if ($departmentName !== 'Kế toán' && $request->filled('platform_id')) {
+            if ($departmentName !== 'Kế Toán' && $request->filled('platform_id')) {
                 $query->where('platform_id', $request->platform_id);
             }
 
-            if ($departmentName !== 'Kế toán' && $request->filled('status')) {
+            if ($departmentName !== 'Kế Toán' && $request->filled('status')) {
                 $query->where('status', $request->status);
             }
 
@@ -69,15 +69,17 @@ class FinancialController extends Controller
             $totalRevenue = $totalCommission = $totalExpense = $totalTransfer = $totalExpenseTotal = 0;
             $revenueBySource = $commissionBySource = $transferBySource = $expenseBySource = [];
 
-            if ($departmentName === 'Kế toán') {
+            if ($departmentName === 'Kế Toán') {
                 $totalRevenue = $records->sum('cash');
                 $totalTransfer = $records->sum('bank_transfer');
                 $totalExpenseTotal = $records->sum('expense');
                 foreach ($records as $record) {
-                    $sourceName = $record->office->name;
-                    $revenueBySource[$sourceName] = ($revenueBySource[$sourceName] ?? 0) + $record->cash;
-                    $transferBySource[$sourceName] = ($transferBySource[$sourceName] ?? 0) + $record->bank_transfer;
-                    $expenseBySource[$sourceName] = ($expenseBySource[$sourceName] ?? 0) + $record->expense;
+                    foreach ($record->offices as $office) {
+                        $sourceName = $office->name;
+                        $revenueBySource[$sourceName] = ($revenueBySource[$sourceName] ?? 0) + $record->cash;
+                        $transferBySource[$sourceName] = ($transferBySource[$sourceName] ?? 0) + $record->bank_transfer;
+                        $expenseBySource[$sourceName] = ($expenseBySource[$sourceName] ?? 0) + $record->expense;
+                    }
                 }
             } else {
                 $totalRevenue = $records->sum('revenue');
@@ -241,30 +243,27 @@ class FinancialController extends Controller
     public function editMarketing($id)
     {
         $employee = Auth::user();
-        $financialRecord = FinancialRecord::where('id', $id)
-            ->where('submitted_by', $employee->id)
-            ->with(['expenses', 'department', 'platform', 'route'])
-            ->firstOrFail();
-
-        if ($financialRecord->status !== 'pending') {
-            abort(403, 'Bạn chỉ có thể sửa bản ghi đang chờ duyệt.');
-        }
-
-        $platforms = Platform::all();
+        $financialRecord = FinancialRecord::with(['expenses', 'metricValues', 'platform.metrics'])->findOrFail($id);
         $routes = Route::all();
+        $platforms = Platform::all();
         $expenseTypes = ExpenseType::all();
-        $offices = collect([]);
-        $fields = collect([]);
-        $noteData = json_decode($financialRecord->note);
-        $financialRecord->revenue_sources = $noteData->revenue_sources ?? [];
+
+        // Lấy metric values từ database
+        $metricsData = $financialRecord->metricValues->pluck('value', 'metric_id')->toArray();
+
+        Log::info('Editing financial record', [
+            'record_id' => $id,
+            'submitted_by' => $financialRecord->submitted_by,
+            'employee_id' => $employee->id,
+            'metrics_data' => $metricsData
+        ]);
 
         return view('employee.financial.edit', compact(
             'financialRecord',
             'routes',
-            'fields',
-            'expenseTypes',
             'platforms',
-            'offices'
+            'expenseTypes',
+            'metricsData'
         ));
     }
 
@@ -380,22 +379,30 @@ class FinancialController extends Controller
                 'expense' => 'required|numeric|min:0',
                 'bank_transfer' => 'required|numeric|min:0',
                 'revenue_sources' => 'required|array|min:1',
-                'revenue_sources.*.source_name' => 'required|string|max:255|exists:offices,name',
-                'revenue_sources.*.cash' => 'required|numeric|min:0',
+                'revenue_sources.*.office_id' => 'required|exists:offices,id',
+                'revenue_sources.*.value' => 'required|numeric|min:0',
             ]);
 
             $now = now();
-            foreach ($validated['revenue_sources'] as $index => $source) {
-                $office = Office::where('name', $source['source_name'])->first();
-                OfficeRevenue::create([
-                    'office_id' => $office->id,
-                    'cash' => $source['cash'],
-                    'bank_transfer' => $validated['bank_transfer'], // Chuyển khoản chung cho tất cả
-                    'expense' => $validated['expense'], // Chi phí chung cho tất cả
-                    'total' => $source['cash'] + $validated['bank_transfer'] - $validated['expense'],
-                    'record_date' => $now->toDateString(),
-                ]);
+            $totalValue = array_sum(array_column($validated['revenue_sources'], 'value'));
+
+            // Tạo bản ghi OfficeRevenue
+            $officeRevenue = OfficeRevenue::create([
+                'cash' => $totalValue, // Tổng giá trị từ các văn phòng
+                'bank_transfer' => $validated['bank_transfer'],
+                'expense' => $validated['expense'],
+                'total' => $totalValue + $validated['bank_transfer'] - $validated['expense'],
+                'record_date' => $now->toDateString(),
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            // Gắn các văn phòng và lưu giá trị vào bảng trung gian
+            $officeData = [];
+            foreach ($validated['revenue_sources'] as $source) {
+                $officeData[$source['office_id']] = ['value' => $source['value']];
             }
+            $officeRevenue->offices()->attach($officeData);
 
             return response()->json([
                 'success' => true,
@@ -416,20 +423,23 @@ class FinancialController extends Controller
     public function editAccounting($id)
     {
         $employee = Auth::user();
-        $officeRevenue = OfficeRevenue::where('id', $id)->with(['office'])->firstOrFail();
+        $officeRevenue = OfficeRevenue::where('id', $id)->with('offices')->firstOrFail();
         $offices = Office::all();
         $platforms = collect([]);
         $routes = collect([]);
         $expenseTypes = collect([]);
         $fields = collect([]);
 
-        // Chuẩn bị dữ liệu để hiển thị
-        $officeRevenue->revenue_sources = [[
-            'source_name' => $officeRevenue->office->name,
-            'cash' => $officeRevenue->cash,
-            'bank_transfer' => $officeRevenue->bank_transfer,
-            'expense' => $officeRevenue->expense,
-        ]];
+        // Chuẩn bị revenue_sources từ bảng trung gian office_revenue_offices
+        $revenueSources = $officeRevenue->offices->map(function ($office) {
+            return [
+                'office_id' => $office->id,
+                'value' => $office->pivot->value ?? 0, // Lấy value từ pivot
+            ];
+        })->toArray();
+
+        // Gán revenue_sources vào officeRevenue
+        $officeRevenue->revenue_sources = $revenueSources;
 
         return view('employee.financial.edit', compact(
             'officeRevenue',
@@ -460,19 +470,27 @@ class FinancialController extends Controller
                 'expense' => 'required|numeric|min:0',
                 'bank_transfer' => 'required|numeric|min:0',
                 'revenue_sources' => 'required|array|min:1',
-                'revenue_sources.*.source_name' => 'required|string|max:255|exists:offices,name',
-                'revenue_sources.*.cash' => 'required|numeric|min:0',
+                'revenue_sources.*.office_id' => 'required|exists:offices,id',
+                'revenue_sources.*.value' => 'required|numeric|min:0',
             ]);
 
-            $source = $validated['revenue_sources'][0];
-            $office = Office::where('name', $source['source_name'])->first();
+            $totalValue = array_sum(array_column($validated['revenue_sources'], 'value'));
+
+            // Cập nhật bản ghi OfficeRevenue
             $officeRevenue->update([
-                'office_id' => $office->id,
-                'cash' => $source['cash'],
+                'cash' => $totalValue,
                 'bank_transfer' => $validated['bank_transfer'],
                 'expense' => $validated['expense'],
-                'total' => $source['cash'] + $validated['bank_transfer'] - $validated['expense'],
+                'total' => $totalValue + $validated['bank_transfer'] - $validated['expense'],
+                'updated_at' => now(),
             ]);
+
+            // Đồng bộ các văn phòng và giá trị
+            $officeData = [];
+            foreach ($validated['revenue_sources'] as $source) {
+                $officeData[$source['office_id']] = ['value' => $source['value']];
+            }
+            $officeRevenue->offices()->sync($officeData);
 
             return response()->json([
                 'success' => true,
@@ -489,8 +507,6 @@ class FinancialController extends Controller
             ], 500);
         }
     }
-
-   
 
     // Business Department
     public function createBusiness()
@@ -589,32 +605,55 @@ class FinancialController extends Controller
 
     public function editBusiness($id)
     {
-        $employee = Auth::user();
-        $financialRecord = FinancialRecord::where('id', $id)
-            ->where('submitted_by', $employee->id)
-            ->with(['department', 'route'])
-            ->firstOrFail();
+        try {
+            $employee = Auth::user();
 
-        if ($financialRecord->status !== 'pending') {
-            abort(403, 'Bạn chỉ có thể sửa bản ghi đang chờ duyệt.');
+            if (!$employee->department) {
+                Log::error('Employee has no department assigned', ['employee_id' => $employee->id]);
+                return redirect()->back()->with('error', 'Không thể xác định phòng ban của bạn. Vui lòng liên hệ quản trị viên.');
+            }
+
+            $financialRecord = FinancialRecord::where('id', $id)
+                ->where('submitted_by', $employee->id)
+                ->with(['department', 'route'])
+                ->firstOrFail();
+
+            if ($financialRecord->status !== 'pending') {
+                abort(403, 'Bạn chỉ có thể sửa bản ghi đang chờ duyệt.');
+            }
+
+            $routes = Route::all();
+            $fields = Field::where('department_id', $employee->department_id)->get();
+            $expenseTypes = collect([]);
+            $platforms = collect([]);
+            $offices = collect([]);
+
+            // Giải mã note và chuẩn hóa revenue_sources thành mảng
+            $noteData = json_decode($financialRecord->note, true); // Trả về mảng
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                Log::warning('Invalid JSON in note column', ['record_id' => $id, 'note' => $financialRecord->note]);
+                $financialRecord->revenue_sources = [];
+            } else {
+                // Nếu revenue_sources là đối tượng, chuyển thành mảng đơn
+                if (isset($noteData['revenue_sources']) && !is_array($noteData['revenue_sources'])) {
+                    $financialRecord->revenue_sources = [$noteData['revenue_sources']];
+                } else {
+                    $financialRecord->revenue_sources = $noteData['revenue_sources'] ?? [];
+                }
+            }
+
+            return view('employee.financial.edit', compact(
+                'financialRecord',
+                'routes',
+                'fields',
+                'expenseTypes',
+                'platforms',
+                'offices'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Edit business error:', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return redirect()->back()->with('error', 'Đã xảy ra lỗi khi tải bản ghi. Vui lòng thử lại.');
         }
-
-        $routes = Route::all();
-        $fields = Field::where('department_id', $employee->department_id)->get();
-        $expenseTypes = collect([]);
-        $platforms = collect([]);
-        $offices = collect([]);
-        $noteData = json_decode($financialRecord->note);
-        $financialRecord->revenue_sources = $noteData->revenue_sources ?? [];
-
-        return view('employee.financial.edit', compact(
-            'financialRecord',
-            'routes',
-            'fields',
-            'expenseTypes',
-            'platforms',
-            'offices'
-        ));
     }
 
     public function updateBusiness(Request $request, $id)
@@ -702,7 +741,7 @@ class FinancialController extends Controller
             $employee = Auth::user();
             $departmentName = $employee->department->name;
 
-            if ($departmentName === 'Kế toán') {
+            if ($departmentName === 'Kế Toán') {
                 $record = OfficeRevenue::where('id', $id)->firstOrFail();
             } else {
                 $record = FinancialRecord::where('id', $id)
@@ -710,11 +749,11 @@ class FinancialController extends Controller
                     ->firstOrFail();
             }
 
-            if ($departmentName !== 'Kế toán' && $record->status !== 'pending') {
+            if ($departmentName !== 'Kế Toán' && $record->status !== 'pending') {
                 return redirect()->back()->with('error', 'Bạn chỉ có thể xóa bản ghi đang chờ duyệt.');
             }
 
-            if ($departmentName !== 'Kế toán') {
+            if ($departmentName !== 'Kế Toán') {
                 MetricValue::where('financial_record_id', $record->id)->delete();
                 $record->expenses()->delete();
             }
@@ -734,26 +773,12 @@ class FinancialController extends Controller
         return response()->json(['metrics' => $metrics]);
     }
 
-    public function getMetricValues($metricId, Request $request)
-    {
-        $query = MetricValue::where('metric_id', $metricId)
-            ->select('value', 'recorded_at');
-
-        if ($request->has('record_id')) {
-            $record = FinancialRecord::findOrFail($request->record_id);
-            $query->where('financial_record_id', $record->id);
-        }
-
-        $values = $query->get();
-        return response()->json(['values' => $values]);
-    }
-
     public function getMetricValuesForRecord($recordId)
     {
-        $record = FinancialRecord::findOrFail($recordId);
-        $metricValues = MetricValue::where('financial_record_id', $recordId)
-            ->with('metric')
-            ->get();
+        $record = FinancialRecord::with('metricValues')->findOrFail($recordId);
+        $metricValues = $record->metricValues->mapWithKeys(function ($metricValue) {
+            return [$metricValue->metric_id => $metricValue->value];
+        })->toArray();
         return response()->json(['metric_values' => $metricValues]);
     }
 }

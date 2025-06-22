@@ -6,11 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class OfficeRevenue extends Model
 {
-    protected $fillable = ['office_id', 'cash', 'bank_transfer', 'expense', 'total', 'record_date'];
+    protected $fillable = ['cash', 'bank_transfer', 'expense', 'total', 'record_date'];
 
     // Thêm quan hệ với Office
-    public function office()
+    public function offices()
     {
-        return $this->belongsTo(\App\Models\Office::class);
+        return $this->belongsToMany(Office::class, 'office_revenue_offices')
+            ->withPivot('value'); // Chỉ định cột value từ bảng pivot
     }
 }
