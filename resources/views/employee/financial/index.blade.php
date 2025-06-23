@@ -15,15 +15,15 @@
         <div class="card-body">
             <div class="mb-3 row">
                 @if ($isAccountant)
-                    <div class="col-md-3"><strong>Tổng tiền mặt:</strong> {{ number_format($totalRevenue, 2) }} VNĐ</div>
-                    <div class="col-md-3"><strong>Tổng chuyển khoản:</strong> {{ number_format($totalTransfer, 2) }} VNĐ
+                    <div class="col-md-3"><strong>Tổng tiền mặt:</strong> {{ number_format($totalRevenue) }} VNĐ</div>
+                    <div class="col-md-3"><strong>Tổng chuyển khoản:</strong> {{ number_format($totalTransfer) }} VNĐ
                     </div>
-                    <div class="col-md-3"><strong>Tổng chi phí:</strong> {{ number_format($totalExpenseTotal, 2) }} VNĐ</div>
+                    <div class="col-md-3"><strong>Tổng chi phí:</strong> {{ number_format($totalExpenseTotal) }} VNĐ</div>
                 @elseif ($isBusiness)
-                    <div class="col-md-3"><strong>Tổng doanh thu:</strong> {{ number_format($totalRevenue, 2) }} VNĐ</div>
-                    <div class="col-md-3"><strong>Tổng hoa hồng:</strong> {{ number_format($totalCommission, 2) }} VNĐ</div>
+                    <div class="col-md-3"><strong>Tổng doanh thu:</strong> {{ number_format($totalRevenue) }} VNĐ</div>
+                    <div class="col-md-3"><strong>Tổng hoa hồng:</strong> {{ number_format($totalCommission) }} VNĐ</div>
                 @elseif ($isMarketing)
-                    <div class="col-md-3"><strong>Tổng chi phí:</strong> {{ number_format($totalExpense, 2) }} VNĐ</div>
+                    <div class="col-md-3"><strong>Tổng chi phí:</strong> {{ number_format($totalExpense) }} VNĐ</div>
                 @endif
                 <div class="col-md-3"><strong>Số bản ghi:</strong> {{ $recordCount }}</div>
             </div>
@@ -83,7 +83,7 @@
                 <div class="table-responsive">
                     <table class="table table-striped table-hover table-bordered align-middle">
                         <thead class="table-light">
-                            <tr>
+                            <tr class="text-center">
                                 <th scope="col">ID</th>
                                 <th scope="col">Phòng ban</th>
                                 <th scope="col">Ngày</th>
@@ -107,7 +107,7 @@
                                 <th scope="col">Hành động</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="text-center">
                             @foreach ($records as $record)
                                 <tr>
                                     <td>{{ $record->id }}</td>
@@ -120,8 +120,9 @@
                                     @if ($isAccountant)
                                         <td>
                                             @foreach ($record->offices as $office)
-                                                <div class="flex items-center">
-                                                    {{ $office->name }} : {{ $office->pivot->value }}<br>
+                                                <div class="text-start pl-10">
+                                                    <span>{{ $office->name }} : {{ number_format($office->pivot->value) }}
+                                                        VNĐ</span><br>
                                                 </div>
                                             @endforeach
                                         </td>
@@ -143,7 +144,7 @@
                                         </td>
                                     @elseif ($isMarketing)
                                         <td>{{ $record->platform->name }}</td>
-                                        <td>{{ number_format($record->expenses->sum('amount'), 2) }} VNĐ</td>
+                                        <td>{{ number_format($record->expenses->sum('amount')) }} VNĐ</td>
                                     @endif
                                     <td>
                                         @if ($isAccountant)
@@ -234,7 +235,7 @@
                 icon: 'success',
                 title: 'Thành công!',
                 text: '{{ session('
-                                                                                        success ') }}',
+                                                                                                        success ') }}',
                 confirmButtonText: 'OK',
                 confirmButtonColor: '#0d6efd'
             });
@@ -245,7 +246,7 @@
                 icon: 'error',
                 title: 'Lỗi!',
                 text: '{{ session('
-                                                                                        error ') }}',
+                                                                                                        error ') }}',
                 confirmButtonText: 'OK',
                 confirmButtonColor: '#dc3545'
             });

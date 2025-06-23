@@ -266,7 +266,6 @@ class FinancialController extends Controller
             'metricsData'
         ));
     }
-
     public function updateMarketing(Request $request, $id)
     {
         try {
@@ -391,7 +390,7 @@ class FinancialController extends Controller
                 'cash' => $totalValue, // Tổng giá trị từ các văn phòng
                 'bank_transfer' => $validated['bank_transfer'],
                 'expense' => $validated['expense'],
-                'total' => $totalValue + $validated['bank_transfer'] - $validated['expense'],
+                'total' => $totalValue + $validated['bank_transfer'] + $validated['expense'],
                 'record_date' => $now->toDateString(),
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -481,7 +480,7 @@ class FinancialController extends Controller
                 'cash' => $totalValue,
                 'bank_transfer' => $validated['bank_transfer'],
                 'expense' => $validated['expense'],
-                'total' => $totalValue + $validated['bank_transfer'] - $validated['expense'],
+                'total' => $totalValue + $validated['bank_transfer'] + $validated['expense'],
                 'updated_at' => now(),
             ]);
 
