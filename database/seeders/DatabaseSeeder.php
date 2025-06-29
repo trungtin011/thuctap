@@ -8,324 +8,313 @@ use App\Models\Role;
 use App\Models\Permission;
 use App\Models\Employee;
 use App\Models\Platform;
+use App\Models\PlatformMetric;
 use App\Models\ExpenseType;
-use App\Models\FinancialTarget;
+use App\Models\DaiLy;
+use App\Models\Route;
+use App\Models\Office;
 use App\Models\FinancialRecord;
 use App\Models\Expense;
-use App\Models\Office;
+use App\Models\FinancialTarget;
 use App\Models\OfficeRevenue;
+use App\Models\TripsPassenger;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
     public function run()
     {
-        // 1. Thêm phòng ban
+        // 1. Điền dữ liệu cho departments (thực thi trước)
         $departments = [
-            ['name' => 'Marketing', 'description' => 'Phòng ban phụ trách marketing'],
-            ['name' => 'Sales', 'description' => 'Phòng ban phụ trách bán hàng'],
-            ['name' => 'Kế toán', 'description' => 'Phòng ban phụ trách kế toán'], // Thêm Kế toán
+            ['name' => 'Marketing', 'description' => 'Phòng ban phụ trách marketing', 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'Sales', 'description' => 'Phòng ban phụ trách bán hàng', 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'Kinh Doanh', 'description' => 'Phòng ban phụ trách kinh doanh', 'created_at' => '2025-06-29 21:55:00', 'updated_at' => '2025-06-29 21:55:00'],
+            ['name' => 'Kế Toán', 'description' => 'Phòng ban phụ trách kế toán', 'created_at' => '2025-06-29 21:55:00', 'updated_at' => '2025-06-29 21:55:00'],
         ];
         foreach ($departments as $dept) {
-            Department::create($dept);
+            Department::firstOrCreate(['name' => $dept['name']], $dept);
         }
 
-        // 2. Thêm vai trò
+        // 2. Điền dữ liệu cho roles (thực thi sau departments)
         $roles = [
-            ['name' => 'Nhân viên Marketing', 'level' => 'employee', 'department_id' => 1],
-            ['name' => 'Quản lý Marketing', 'level' => 'manager', 'department_id' => 1],
-            ['name' => 'Admin Marketing', 'level' => 'admin', 'department_id' => 1],
-            ['name' => 'Nhân viên Sales', 'level' => 'employee', 'department_id' => 2],
-            ['name' => 'Quản lý Sales', 'level' => 'manager', 'department_id' => 2],
-            ['name' => 'Admin Sales', 'level' => 'admin', 'department_id' => 2],
-            ['name' => 'Nhân viên Kế toán', 'level' => 'employee', 'department_id' => 3], // Thêm Kế toán
-            ['name' => 'Quản lý Kế toán', 'level' => 'manager', 'department_id' => 3],
-            ['name' => 'Admin Kế toán', 'level' => 'admin', 'department_id' => 3],
+            ['name' => 'Nhân viên Marketing', 'level' => 'employee', 'department_id' => 1, 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'Quản lý Marketing', 'level' => 'manager', 'department_id' => 1, 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'Admin Marketing', 'level' => 'admin', 'department_id' => 1, 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'Nhân viên Sales', 'level' => 'employee', 'department_id' => 2, 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'Quản lý Sales', 'level' => 'manager', 'department_id' => 2, 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'Admin Sales', 'level' => 'admin', 'department_id' => 2, 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'Nhân viên Kinh Doanh', 'level' => 'employee', 'department_id' => 3, 'created_at' => '2025-06-29 21:55:00', 'updated_at' => '2025-06-29 21:55:00'],
+            ['name' => 'Quản lý Kinh Doanh', 'level' => 'manager', 'department_id' => 3, 'created_at' => '2025-06-29 21:55:00', 'updated_at' => '2025-06-29 21:55:00'],
+            ['name' => 'Admin Kinh Doanh', 'level' => 'admin', 'department_id' => 3, 'created_at' => '2025-06-29 21:55:00', 'updated_at' => '2025-06-29 21:55:00'],
+            ['name' => 'Nhân viên Kế Toán', 'level' => 'employee', 'department_id' => 4, 'created_at' => '2025-06-29 21:55:00', 'updated_at' => '2025-06-29 21:55:00'],
+            ['name' => 'Quản lý Kế Toán', 'level' => 'manager', 'department_id' => 4, 'created_at' => '2025-06-29 21:55:00', 'updated_at' => '2025-06-29 21:55:00'],
+            ['name' => 'Admin Kế Toán', 'level' => 'admin', 'department_id' => 4, 'created_at' => '2025-06-29 21:55:00', 'updated_at' => '2025-06-29 21:55:00'],
         ];
         foreach ($roles as $role) {
-            Role::create($role);
+            Role::firstOrCreate(['name' => $role['name']], $role);
         }
 
-        // 4. Liên kết quyền với vai trò qua bảng role_permission
+        // 3. Điền dữ liệu cho permissions
+        $permissions = [
+            ['name' => 'Xem bản ghi tài chính', 'code' => 'view_records', 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'Chỉnh sửa bản ghi tài chính', 'code' => 'edit_records', 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'Phê duyệt bản ghi tài chính', 'code' => 'approve_records', 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'Xóa bản ghi tài chính', 'code' => 'delete_records', 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'Quản lý phòng ban', 'code' => 'manage_departments', 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'Quản lý vai trò', 'code' => 'manage_roles', 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+        ];
+        foreach ($permissions as $perm) {
+            Permission::firstOrCreate(['code' => $perm['code']], $perm);
+        }
+
+        // 4. Điền dữ liệu cho role_permission
         $rolePermissions = [
-            // Nhân viên Marketing (role_id = 1)
             ['role_id' => 1, 'permission_id' => 1],
-            // Quản lý Marketing (role_id = 2)
             ['role_id' => 2, 'permission_id' => 1],
             ['role_id' => 2, 'permission_id' => 2],
             ['role_id' => 2, 'permission_id' => 3],
-            // Admin Marketing (role_id = 3)
-            ['role_id' => 3, 'permission_id' => 1],
-            ['role_id' => 3, 'permission_id' => 2],
-            ['role_id' => 3, 'permission_id' => 3],
-            ['role_id' => 3, 'permission_id' => 4],
-            ['role_id' => 3, 'permission_id' => 5],
-            ['role_id' => 3, 'permission_id' => 6],
-            // Nhân viên Sales (role_id = 4)
-            ['role_id' => 4, 'permission_id' => 1],
-            // Quản lý Sales (role_id = 5)
-            ['role_id' => 5, 'permission_id' => 1],
-            ['role_id' => 5, 'permission_id' => 2],
-            ['role_id' => 5, 'permission_id' => 3],
-            // Admin Sales (role_id = 6)
-            ['role_id' => 6, 'permission_id' => 1],
-            ['role_id' => 6, 'permission_id' => 2],
-            ['role_id' => 6, 'permission_id' => 3],
-            ['role_id' => 6, 'permission_id' => 4],
-            ['role_id' => 6, 'permission_id' => 5],
-            ['role_id' => 6, 'permission_id' => 6],
-            // Nhân viên Kế toán (role_id = 7)
-            ['role_id' => 7, 'permission_id' => 1],
-            // Quản lý Kế toán (role_id = 8)
-            ['role_id' => 8, 'permission_id' => 1],
-            ['role_id' => 8, 'permission_id' => 2],
-            ['role_id' => 8, 'permission_id' => 3],
-            // Admin Kế toán (role_id = 9)
-            ['role_id' => 9, 'permission_id' => 1],
-            ['role_id' => 9, 'permission_id' => 2],
-            ['role_id' => 9, 'permission_id' => 3],
-            ['role_id' => 9, 'permission_id' => 4],
-            ['role_id' => 9, 'permission_id' => 5],
-            ['role_id' => 9, 'permission_id' => 6],
         ];
         foreach ($rolePermissions as $rp) {
-            DB::table('role_permission')->insert($rp);
+            DB::table('role_permission')->updateOrInsert(
+                ['role_id' => $rp['role_id'], 'permission_id' => $rp['permission_id']],
+                $rp
+            );
         }
 
-        // 5. Thêm nhân viên mẫu
+        // 5. Điền dữ liệu cho employees
         $employees = [
             [
+                'department_id' => 1,
+                'role_id' => 1,
                 'name' => 'John Doe',
-                'email' => 'khoaebanypk03641@gmail.com',
-                'password' => Hash::make('123123123'),
-                'department_id' => 1,
-                'role_id' => 1, // Nhân viên Marketing
-                'position' => 'Nhân viên Marketing',
+                'position' => 'Chuyên viên Marketing',
+                'email' => 'john.doe@example.com',
+                'password' => Hash::make('password'),
+                'created_at' => '2025-05-23 19:14:38',
+                'updated_at' => '2025-05-23 19:14:38',
             ],
             [
+                'department_id' => 1,
+                'role_id' => 2,
                 'name' => 'Jane Smith',
-                'email' => 'ykhoa11a13@gmail.com',
-                'password' => Hash::make('123123123'),
-                'department_id' => 1,
-                'role_id' => 2, // Quản lý Marketing
-                'position' => 'Quản lý',
+                'position' => 'Quản lý Marketing',
+                'email' => 'jane.smith@example.com',
+                'password' => Hash::make('password'),
+                'created_at' => '2025-05-23 19:14:38',
+                'updated_at' => '2025-05-23 19:14:38',
             ],
             [
+                'department_id' => 1,
+                'role_id' => 3,
                 'name' => 'Admin User',
-                'email' => 'dauxanh008@gmail.com',
-                'password' => Hash::make('123123123'),
-                'department_id' => 1,
-                'role_id' => 3, // Admin Marketing
                 'position' => 'Quản trị viên',
+                'email' => 'admin.user@example.com',
+                'password' => Hash::make('password'),
+                'created_at' => '2025-05-23 19:14:38',
+                'updated_at' => '2025-05-23 19:14:38',
             ],
             [
-                'name' => 'Kế toán viên',
-                'email' => 'ketoan@example.com',
+                'department_id' => 3, // Kinh Doanh
+                'role_id' => 7, // Nhân viên Kinh Doanh (id 7 sau 6 role cũ)
+                'name' => 'Nguyen Van A',
+                'position' => 'Nhân viên Kinh Doanh',
+                'email' => 'kinhdoanh@gmail.com',
                 'password' => Hash::make('123123123'),
-                'department_id' => 3,
-                'role_id' => 7, // Nhân viên Kế toán
-                'position' => 'Nhân viên Kế toán',
+                'created_at' => '2025-06-29 21:59:00',
+                'updated_at' => '2025-06-29 21:59:00',
             ],
             [
-                'name' => 'Kinh doanh',
-                'email' => 'kinhdoanh@example.com',
+                'department_id' => 4, // Kế Toán
+                'role_id' => 10, // Nhân viên Kế Toán (id 10 sau 9 role)
+                'name' => 'Tran Thi B',
+                'position' => 'Nhân viên Kế Toán',
+                'email' => 'ketoan@gmail.com',
                 'password' => Hash::make('123123123'),
-                'department_id' => 4,
-                'role_id' => 8, // Quản lý Kế toán
-                'position' => 'Quản lý Kinh doanh',
+                'created_at' => '2025-06-29 21:59:00',
+                'updated_at' => '2025-06-29 21:59:00',
             ],
         ];
         foreach ($employees as $emp) {
-            Employee::create($emp);
+            Employee::firstOrCreate(['email' => $emp['email']], $emp);
         }
 
-        // 6. Thêm nền tảng
+        // 6. Điền dữ liệu cho platforms
         $platforms = [
-            ['name' => 'Google Ads'],
-            ['name' => 'Facebook Ads'],
-            ['name' => 'TikTok Ads'],
-            ['name' => 'QR'],
-            ['name' => 'WEB/APP'],
-            ['name' => 'Các văn phòng'],
-            ['name' => 'Vé thương gia'],
+            ['name' => 'Google Ads', 'foco_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'], // Sửa 'foco_at' thành 'created_at'
+            ['name' => 'Facebook Ads', 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'TikTok Ads', 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'QR', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'WEB/APP', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'Các văn phòng', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'Vé thương gia', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
         ];
         foreach ($platforms as $platform) {
-            Platform::create($platform);
+            Platform::firstOrCreate(['name' => $platform['name']], $platform);
         }
 
-        // 7. Thêm loại chi phí
+        // 7. Điền dữ liệu cho platform_metrics
+        $platformMetrics = [
+            ['platform_id' => 2, 'name' => 'Lượt Click', 'unit' => 'Lượt', 'data_type' => 'int', 'created_at' => '2025-05-23 19:16:23', 'updated_at' => '2025-05-23 19:16:23'],
+        ];
+        foreach ($platformMetrics as $metric) {
+            PlatformMetric::firstOrCreate(['name' => $metric['name'], 'platform_id' => $metric['platform_id']], $metric);
+        }
+
+        // 8. Điền dữ liệu cho expense_types
         $expenseTypes = [
-            ['name' => 'Chi phí quảng cáo'],
-            ['name' => 'Chi phí vận hành'],
-            ['name' => 'Chi phí nhân sự'],
+            ['name' => 'Chi phí quảng cáo', 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'Chi phí vận hành', 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
+            ['name' => 'Chi phí nhân sự', 'created_at' => '2025-05-23 19:14:38', 'updated_at' => '2025-05-23 19:14:38'],
         ];
         foreach ($expenseTypes as $type) {
-            ExpenseType::create($type);
+            ExpenseType::firstOrCreate(['name' => $type['name']], $type);
         }
 
-        // 8. Thêm văn phòng
-        $offices = [
-            ['name' => 'VP 49'],
-            ['name' => 'VP BT'],
-            ['name' => 'VP CMG'],
-            ['name' => 'VP Q5'],
-            ['name' => 'VP ĐL'],
-            ['name' => 'VP NT'],
-        ];
-        foreach ($offices as $office) {
-            Office::create($office);
-        }
-
-        // 9. Thêm tuyến đường
-        $routes = [
-            ['name' => 'Sài Gòn - Buôn Ma Thuột', 'department_id' => 1],
-            ['name' => 'Buôn Ma Thuột - Sài Gòn', 'department_id' => 1],
-            ['name' => 'Sài Gòn - Đà Lạt', 'department_id' => 1],
-            ['name' => 'Đà Lạt - Sài Gòn', 'department_id' => 1],
-            ['name' => 'Sài Gòn - Nha Trang', 'department_id' => 1],
-            ['name' => 'Nha Trang - Sài Gòn', 'department_id' => 1],
-            ['name' => 'Sài Gòn - Mũi Né', 'department_id' => 1],
-            ['name' => 'Mũi Né - Sài Gòn', 'department_id' => 1],
-            ['name' => 'Buôn Ma Thuột - Đà Lạt', 'department_id' => 1],
-            ['name' => 'Đà Lạt - Buôn Ma Thuột', 'department_id' => 1],
-            ['name' => 'Xe hợp đồng', 'department_id' => 1],
-        ];
-        foreach ($routes as $route) {
-            DB::table('routes')->insert($route);
-        }
-
-        // 10. Thêm đại lý
+        // 9. Điền dữ liệu cho dai_lies
         $daiLies = [
-            ['ten_dai_ly' => 'Adam', 'email' => 'adam@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM'],
-            ['ten_dai_ly' => 'Vé xe rẻ', 'email' => 'vexe@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM'],
-            ['ten_dai_ly' => 'Redbus', 'email' => 'redbus@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM'],
-            ['ten_dai_ly' => 'Mobitrip', 'email' => 'mobitrip@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM'],
-            ['ten_dai_ly' => 'WEB/APP', 'email' => 'webapp@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM'],
-            ['ten_dai_ly' => 'QR', 'email' => 'qr@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM'],
-            ['ten_dai_ly' => 'Các văn phòng', 'email' => 'offices@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM'],
-            ['ten_dai_ly' => 'Vé thương gia', 'email' => 'thuonggia@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM'],
-            ['ten_dai_ly' => 'Distribusion', 'email' => 'distribusion@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM'],
+            ['ten_dai_ly' => 'Adam', 'email' => 'adam@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['ten_dai_ly' => 'Vé xe rẻ', 'email' => 'vexe@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['ten_dai_ly' => 'Redbus', 'email' => 'redbus@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['ten_dai_ly' => 'Mobitrip', 'email' => 'mobitrip@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['ten_dai_ly' => 'WEB/APP', 'email' => 'webapp@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['ten_dai_ly' => 'QR', 'email' => 'qr@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['ten_dai_ly' => 'Các văn phòng', 'email' => 'offices@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['ten_dai_ly' => 'Vé thương gia', 'email' => 'thuonggia@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['ten_dai_ly' => 'Distribusion', 'email' => 'distribusion@example.com', 'so_dien_thoai' => '0123456789', 'dia_chi' => 'HCM', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
         ];
         foreach ($daiLies as $daiLy) {
-            DB::table('dai_lies')->insert($daiLy);
+            DaiLy::firstOrCreate(['email' => $daiLy['email']], $daiLy);
         }
 
-        // 11. Thêm bản ghi tài chính
+        // 10. Điền dữ liệu cho routes
+        $routes = [
+            ['name' => 'Sài Gòn - Buôn Ma Thuột', 'department_id' => 1, 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'Buôn Ma Thuột - Sài Gòn', 'department_id' => 1, 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'Sài Gòn - Đà Lạt', 'department_id' => 1, 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'Đà Lạt - Sài Gòn', 'department_id' => 1, 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'Sài Gòn - Nha Trang', 'department_id' => 1, 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'Nha Trang - Sài Gòn', 'department_id' => 1, 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'Sài Gòn - Mũi Né', 'department_id' => 1, 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'Mũi Né - Sài Gòn', 'department_id' => 1, 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'Buôn Ma Thuột - Đà Lạt', 'department_id' => 1, 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'Đà Lạt - Buôn Ma Thuột', 'department_id' => 1, 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'Xe hợp đồng', 'department_id' => 1, 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+        ];
+        foreach ($routes as $route) {
+            Route::firstOrCreate(['name' => $route['name']], $route);
+        }
+
+        // 11. Điền dữ liệu cho offices
+        $offices = [
+            ['name' => 'VP 49', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'VP BT', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'VP CMG', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'VP Q5', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'VP ĐL', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+            ['name' => 'VP NT', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+        ];
+        foreach ($offices as $office) {
+            Office::firstOrCreate(['name' => $office['name']], $office);
+        }
+
+        // 12. Điền dữ liệu cho financial_records
         $financialRecords = [
             [
-                'dai_ly_id' => 1,
                 'department_id' => 1,
                 'platform_id' => 1,
-                'route_id' => 1,
+                'dai_ly_id' => 1,
                 'office_id' => 1,
+                'route_id' => null,
                 'revenue' => 1101465000.00,
                 'commission' => 121264230.00,
+                'roas' => 61.37,
                 'record_date' => '2025-01-31',
                 'record_time' => '23:59:00',
                 'note' => 'Doanh thu Adam T1/2025',
                 'status' => 'pending',
                 'submitted_by' => 1,
-            ],
-            [
-                'dai_ly_id' => 2,
-                'department_id' => 1,
-                'platform_id' => 2,
-                'route_id' => 2,
-                'office_id' => 1,
-                'revenue' => 3931184500.00,
-                'commission' => 395440870.00,
-                'record_date' => '2025-01-31',
-                'record_time' => '23:59:00',
-                'note' => 'Doanh thu Vé xe rẻ T1/2025',
-                'status' => 'pending',
-                'submitted_by' => 1,
-            ],
-            [
-                'dai_ly_id' => 3,
-                'department_id' => 1,
-                'platform_id' => 3,
-                'route_id' => 3,
-                'office_id' => 1,
-                'revenue' => 111675000.00,
-                'commission' => 11167500.00,
-                'record_date' => '2025-01-31',
-                'record_time' => '23:59:00',
-                'note' => 'Doanh thu Redbus T1/2025',
-                'status' => 'pending',
-                'submitted_by' => 1,
+                'created_at' => '2025-05-25 17:04:00',
+                'updated_at' => '2025-05-25 17:04:00',
             ],
         ];
         foreach ($financialRecords as $record) {
             FinancialRecord::create($record);
         }
 
-        // 12. Thêm chi phí
+        // 13. Điền dữ liệu cho expenses
         $expenses = [
-            ['financial_record_id' => 1, 'expense_type_id' => 3, 'amount' => 17949000.00, 'description' => 'Chi phí VP 49 T1/2025'],
-            ['financial_record_id' => 2, 'expense_type_id' => 3, 'amount' => 13720000.00, 'description' => 'Chi phí VP 49 T2/2025'],
-            ['financial_record_id' => 3, 'expense_type_id' => 3, 'amount' => 12101000.00, 'description' => 'Chi phí VP 49 T3/2025'],
+            [
+                'financial_record_id' => 1,
+                'expense_type_id' => 3,
+                'amount' => 17949000.00,
+                'description' => 'Chi phí VP 49 T1/2025',
+                'status' => 'pending',
+                'reject_reason' => null,
+                'created_at' => '2025-05-25 17:04:00',
+                'updated_at' => '2025-05-25 17:04:00',
+            ],
         ];
         foreach ($expenses as $expense) {
             Expense::create($expense);
         }
 
-        // 13. Thêm mục tiêu tài chính
+        // 14. Điền dữ liệu cho financial_targets
         $financialTargets = [
-            ['year' => 2025, 'department_id' => 1, 'target_amount' => 35017977699.00],
+            [
+                'year' => 2025,
+                'department_id' => 1,
+                'target_amount' => 35017977699.00,
+                'created_at' => '2025-05-25 17:04:00',
+                'updated_at' => '2025-05-25 17:04:00',
+            ],
         ];
         foreach ($financialTargets as $target) {
-            FinancialTarget::create($target);
+            FinancialTarget::firstOrCreate(['year' => $target['year'], 'department_id' => $target['department_id']], $target);
         }
 
-        // 14. Thêm bản ghi doanh thu văn phòng
+        // 15. Điền dữ liệu cho office_revenues
         $officeRevenues = [
             [
+                'department_id' => null,
+                'submitted_by' => null,
                 'cash' => 155876000.00,
                 'bank_transfer' => 131143000.00,
                 'expense' => 17949000.00,
-                'total' => 304932000.00, // Cập nhật lại tổng: 155876000 + 131143000 + 17949000
+                'total' => 378786000.00,
+                'status' => 'pending',
+                'reject_reason' => null,
                 'record_date' => '2025-01-31',
-                'status' => 'pending',
-            ],
-            [
-                'cash' => 124920000.00,
-                'bank_transfer' => 74955000.00,
-                'expense' => 13720000.00,
-                'total' => 213595000.00, // Cập nhật lại tổng: 124920000 + 74955000 + 13720000
-                'record_date' => '2025-02-28',
-                'status' => 'pending',
-            ],
-            [
-                'cash' => 134343000.00,
-                'bank_transfer' => 108015000.00,
-                'expense' => 12101000.00,
-                'total' => 254459000.00, // Cập nhật lại tổng: 134343000 + 108015000 + 12101000
-                'record_date' => '2025-03-31',
-                'status' => 'pending',
-            ],
-            [
-                'cash' => 112500000.00,
-                'bank_transfer' => 73100000.00,
-                'expense' => 10755000.00,
-                'total' => 196655000.00, // Cập nhật lại tổng: 112500000 + 73100000 + 10755000
-                'record_date' => '2025-04-30',
-                'status' => 'pending',
-            ],
-            [
-                'cash' => 42318000.00,
-                'bank_transfer' => 0.00,
-                'expense' => 0.00,
-                'total' => 42318000.00,
-                'record_date' => '2025-01-31',
-                'status' => 'pending',
+                'created_at' => '2025-05-25 17:04:00',
+                'updated_at' => '2025-05-25 17:04:00',
             ],
         ];
-        foreach ($officeRevenues as $index => $revenue) {
-            $officeRevenue = OfficeRevenue::create($revenue);
-            // Gắn các văn phòng tương ứng qua bảng office_revenue_offices
-            $officeIds = [1, 2, 3, 4, 5, 6]; // Gắn tất cả văn phòng cho mỗi bản ghi mẫu
-            $officeRevenue->offices()->attach(array_slice($officeIds, 0, $index + 1)); // Gắn văn phòng theo thứ tự
+        foreach ($officeRevenues as $revenue) {
+            OfficeRevenue::create($revenue);
+        }
+
+        // 16. Điền dữ liệu cho trips_passengers
+        $tripsPassengers = [
+            ['route_id' => 1, 'trips' => 460, 'passengers' => 8573, 'record_date' => '2025-01-31', 'created_at' => '2025-05-25 17:04:00', 'updated_at' => '2025-05-25 17:04:00'],
+        ];
+        foreach ($tripsPassengers as $trip) {
+            TripsPassenger::create($trip);
+        }
+
+        // 17. Điền dữ liệu cho fields
+        $fields = [
+            ['name' => 'Vé xe rẻ', 'slug' => 've-xe-re', 'type' => 'Redbus', 'required' => 0, 'department_id' => 3, 'created_at' => '2025-06-29 21:44:00', 'updated_at' => '2025-06-29 21:44:00'],
+            ['name' => 'Redbus', 'slug' => 'redbus', 'type' => 'Redbus', 'required' => 0, 'department_id' => 3, 'created_at' => '2025-06-29 21:44:00', 'updated_at' => '2025-06-29 21:44:00'],
+            ['name' => 'Mobitrip', 'slug' => 'mobitrip', 'type' => 'Mobitrip', 'required' => 0, 'department_id' => 3, 'created_at' => '2025-06-29 21:44:00', 'updated_at' => '2025-06-29 21:44:00'],
+            ['name' => 'Distribusion', 'slug' => 'distribusion', 'type' => 'Distribusion', 'required' => 0, 'department_id' => 3, 'created_at' => '2025-06-29 21:44:00', 'updated_at' => '2025-06-29 21:44:00'],
+            ['name' => 'WEB/APP', 'slug' => 'web-app', 'type' => 'WEB/APP', 'required' => 0, 'department_id' => 3, 'created_at' => '2025-06-29 21:44:00', 'updated_at' => '2025-06-29 21:44:00'],
+            ['name' => 'QR', 'slug' => 'qr', 'type' => 'QR', 'required' => 0, 'department_id' => 3, 'created_at' => '2025-06-29 21:44:00', 'updated_at' => '2025-06-29 21:44:00'],
+            ['name' => 'Các văn phòng', 'slug' => 'cac-van-phong', 'type' => 'Office', 'required' => 0, 'department_id' => 3, 'created_at' => '2025-06-29 21:44:00', 'updated_at' => '2025-06-29 21:44:00'],
+            ['name' => 'Vé thương gia', 'slug' => 've-thuong-gia', 'type' => 'Business', 'required' => 0, 'department_id' => 3, 'created_at' => '2025-06-29 21:44:00', 'updated_at' => '2025-06-29 21:44:00'],
+        ];
+        foreach ($fields as $field) {
+            \App\Models\Field::firstOrCreate(['name' => $field['name']], $field);
         }
     }
 }
