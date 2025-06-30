@@ -142,6 +142,17 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // Tạo bảng financial_record_revenue_sources
+        Schema::create('financial_record_revenue_sources', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('financial_record_id')->constrained()->onDelete('cascade');
+            $table->foreignId('route_id')->constrained()->onDelete('cascade');
+            $table->string('source_name', 100);
+            $table->decimal('amount', 15, 2);
+            $table->decimal('commission', 15, 2);
+            $table->timestamps();
+        });
+
         // Tạo bảng expenses
         Schema::create('expenses', function (Blueprint $table) {
             $table->bigIncrements('id');
@@ -646,6 +657,7 @@ return new class extends Migration
         Schema::dropIfExists('financial_targets');
         Schema::dropIfExists('expenses');
         Schema::dropIfExists('financial_records');
+        Schema::dropIfExists('financial_record_revenue_sources');
         Schema::dropIfExists('offices');
         Schema::dropIfExists('routes');
         Schema::dropIfExists('dai_lies');

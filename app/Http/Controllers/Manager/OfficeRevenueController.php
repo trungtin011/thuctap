@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\OfficeRevenue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class OfficeRevenueController extends Controller
 {
+
     public function index()
     {
         // Lấy danh sách bản ghi office_revenues với trạng thái pending
@@ -32,29 +34,27 @@ class OfficeRevenueController extends Controller
         return view('manager.office_revenues.show', compact('officeRevenue'));
     }
 
-   public function approve($id)
+    public function approve($id)
     {
-        // Kiểm tra quyền manager
+        Log::info("Attempting to approve OfficeRevenue ID: {$id} by user: " . Auth::id());
+
         if (Auth::user()->role->level !== 'manager') {
+            Log::warning("Unauthorized approve attempt by user: " . Auth::id());
             return redirect()->route('manager.office_revenues.index')->with('error', 'Bạn không có quyền phê duyệt.');
         }
 
-        // Tìm bản ghi theo ID, đảm bảo do nhân viên Kế Toán (role_id = 8) nhập
-        $officeRevenue = OfficeRevenue::whereHas('submittedBy', function ($query) {
-                $query->where('role_id', 8); // Vai trò Kế Toán
-            })
-            ->findOrFail($id);
+        $officeRevenue = OfficeRevenue::with(['submittedBy', 'department'])->findOrFail($id);
 
-        // Kiểm tra trạng thái để đảm bảo bản ghi chưa được xử lý
         if ($officeRevenue->status !== 'pending') {
+            Log::warning("OfficeRevenue ID: {$id} is not in pending status. Current status: {$officeRevenue->status}");
             return redirect()->route('manager.office_revenues.index')->with('error', 'Bản ghi này đã được xử lý.');
         }
 
-        // Cập nhật trạng thái thành 'manager_approved'
         $officeRevenue->status = 'manager_approved';
-        $officeRevenue->reject_reason = null; // Xóa lý do từ chối nếu có
+        $officeRevenue->reject_reason = null;
         $officeRevenue->save();
 
+        Log::info("OfficeRevenue ID: {$id} approved successfully.");
         return redirect()->route('manager.office_revenues.index')->with('success', 'Bản ghi đã được phê duyệt và gửi lên Admin.');
     }
 

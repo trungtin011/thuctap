@@ -31,9 +31,9 @@
                     </div>
 
                     @if ($isMarketing || $isBusiness)
-                        <div class="mb-3">
+                        <div class="mb-3 d-none"> <!-- Thêm class d-none để ẩn -->
                             <label for="route_id" class="form-label">Chọn Tuyến</label>
-                            <select name="route_id" id="route_id" class="form-select" required>
+                            <select name="route_id" id="route_id" class="form-select">
                                 <option value="">-- Chọn tuyến --</option>
                                 @foreach ($routes as $route)
                                     <option value="{{ $route->id }}"

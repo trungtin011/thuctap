@@ -131,7 +131,7 @@ class FinancialAdminController extends Controller
 
     public function approve($id)
     {
-        \Log::info("Approving record - ID: $id");
+        Log::info("Approving record - ID: $id");
 
         // Kiểm tra loại bản ghi dựa trên sự tồn tại trong các bảng
         $record = FinancialRecord::find($id);
@@ -160,7 +160,7 @@ class FinancialAdminController extends Controller
 
     public function reject(Request $request, $id)
     {
-        \Log::info("Rejecting record - ID: $id");
+        Log::info("Rejecting record - ID: $id");
 
         // Kiểm tra loại bản ghi dựa trên sự tồn tại trong các bảng
         $record = FinancialRecord::find($id);

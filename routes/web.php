@@ -60,20 +60,22 @@ Route::middleware(['check.role:admin,manager'])->group(function () {
         Route::get('/financial/{id}', [FinancialApprovalController::class, 'show'])->name('manager.financial.show');
         Route::post('/financial/{id}/approve', [FinancialApprovalController::class, 'approve'])->name('manager.financial.approve');
         Route::post('/financial/{id}/reject', [FinancialApprovalController::class, 'reject'])->name('manager.financial.reject');
-  
 
-    Route::get('/expenses', [ExpenseApprovalController::class, 'index'])->name('manager.expenses.index');
+        Route::get('/expenses', [ExpenseApprovalController::class, 'index'])->name('manager.expenses.index');
 
-    Route::get('/expenses/{id}', [ExpenseApprovalController::class, 'show'])->name('manager.expenses.show');
+        Route::get('/expenses/{id}', [ExpenseApprovalController::class, 'show'])->name('manager.expenses.show');
 
-    Route::post('/expenses/{id}/approve', [ExpenseApprovalController::class, 'approve'])->name('manager.expenses.approve');
+        Route::post('/expenses/{id}/approve', [ExpenseApprovalController::class, 'approve'])->name('manager.expenses.approve');
 
-    Route::post('/expenses/{id}/reject', [ExpenseApprovalController::class, 'reject'])->name('manager.expenses.reject');
+        Route::post('/expenses/{id}/reject', [ExpenseApprovalController::class, 'reject'])->name('manager.expenses.reject');
 
-Route::get('/office-revenues', [ManagerOfficeRevenueController::class, 'index'])->name('manager.office_revenues.index');
-    Route::get('/office-revenues/{id}', [ManagerOfficeRevenueController::class, 'show'])->name('manager.office_revenues.show');
-    Route::post('/office-revenues/{id}/approve', [ManagerOfficeRevenueController::class, 'approve'])->name('manager.office_revenues.approve');
-    Route::post('/office-revenues/{id}/reject', [ManagerOfficeRevenueController::class, 'reject'])->name('manager.office_revenues.reject');
+        Route::middleware(['auth'])->group(function () {
+            Route::get('/manager/office-revenues', [ManagerOfficeRevenueController::class, 'index'])->name('manager.office_revenues.index');
+            Route::get('/manager/office-revenues/{id}', [ManagerOfficeRevenueController::class, 'show'])->name('manager.office_revenues.show');
+            Route::post('/manager/office-revenues/{id}/approve', [ManagerOfficeRevenueController::class, 'approve'])->name('manager.office_revenues.approve');
+            Route::post('/manager/office-revenues/{id}/reject', [ManagerOfficeRevenueController::class, 'reject'])->name('manager.office_revenues.reject');
+            
+        });
     });
 });
 
@@ -141,12 +143,12 @@ Route::middleware(['check.role:admin'])->group(function () {
 
         // Route phê duyệt bản ghi tài chính
         Route::post('/approve/{id}', [FinancialAdminController::class, 'approve'])->name('approve');
-  Route::post('/reject/{id}', [FinancialAdminController::class, 'reject'])->name('reject');  
+        Route::post('/reject/{id}', [FinancialAdminController::class, 'reject'])->name('reject');
         // Route hiển thị lịch sử bản ghi đã phê duyệt
         Route::get('/history', [FinancialAdminController::class, 'history'])->name('history');
 
-Route::post('/admin/financial/approve/{id}', [FinancialAdminController::class, 'approve'])->name('admin.financial.approve');
-Route::post('/admin/financial/reject/{id}', [FinancialAdminController::class, 'reject'])->name('admin.financial.reject');
+        Route::post('/admin/financial/approve/{id}', [FinancialAdminController::class, 'approve'])->name('admin.financial.approve');
+        Route::post('/admin/financial/reject/{id}', [FinancialAdminController::class, 'reject'])->name('admin.financial.reject');
 
 
 

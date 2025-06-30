@@ -87,9 +87,6 @@
                                 <th scope="col">ID</th>
                                 <th scope="col">Phòng ban</th>
                                 <th scope="col">Ngày</th>
-                                @if ($isMarketing || $isBusiness)
-                                    <th scope="col">Tuyến</th>
-                                @endif
                                 @if ($isAccountant)
                                     <th scope="col">Văn phòng</th>
                                     <th scope="col">Tiền mặt</th>
@@ -114,9 +111,6 @@
                                     <td>{{ $isAccountant ? auth()->user()->department->name : $record->department->name }}
                                     </td>
                                     <td>{{ \Carbon\Carbon::parse($record->record_date)->format('d/m/Y') }}</td>
-                                    @if ($isMarketing || $isBusiness)
-                                        <td>{{ $record->route->name }}</td>
-                                    @endif
                                     @if ($isAccountant)
                                         <td>
                                             @foreach ($record->offices as $office)

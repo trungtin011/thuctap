@@ -72,42 +72,49 @@
         @if ($officeRevenue->status === 'pending')
             <div class="flex flex-col md:flex-row md:items-center gap-4">
                 <!-- Nút phê duyệt -->
-                <form action="{{ route('manager.office_revenues.approve', $officeRevenue->id) }}" method="POST" id="approve-form">
+                <form action="{{ route('manager.office_revenues.approve', $officeRevenue->id) }}" method="POST"
+                    id="approve-form">
                     @csrf
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded inline-flex items-center">
+                    <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded inline-flex items-center">
                         <i class="fas fa-check-circle mr-2"></i> Phê duyệt
                     </button>
                 </form>
 
                 <!-- Nút từ chối -->
-                <button id="show-reject-form" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded inline-flex items-center">
+                <button id="show-reject-form"
+                    class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded inline-flex items-center">
                     <i class="fas fa-times-circle mr-2"></i> Từ chối
                 </button>
 
                 <!-- Form từ chối -->
-                <form id="reject-form" action="{{ route('manager.office_revenues.reject', $officeRevenue->id) }}" method="POST" class="hidden flex flex-col md:flex-row gap-2">
+                <form id="reject-form" action="{{ route('manager.office_revenues.reject', $officeRevenue->id) }}"
+                    method="POST" class="hidden flex flex-col md:flex-row gap-2">
                     @csrf
-                    <input type="text" name="reject_reason" class="border border-gray-300 rounded px-3 py-2" placeholder="Lý do từ chối" required>
-                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded inline-flex items-center">
+                    <input type="text" name="reject_reason" class="border border-gray-300 rounded px-3 py-2"
+                        placeholder="Lý do từ chối" required>
+                    <button type="submit"
+                        class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded inline-flex items-center">
                         <i class="fas fa-times mr-2"></i> Gửi từ chối
                     </button>
                 </form>
             </div>
         @else
             <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> Bản ghi này đã được {{ $officeRevenue->status === 'approved' ? 'phê duyệt' : 'từ chối' }}.
+                <i class="fas fa-info-circle"></i> Bản ghi này đã được
+                {{ $officeRevenue->status === 'approved' ? 'phê duyệt' : 'từ chối' }}.
             </div>
         @endif
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const rejectBtn = document.getElementById('show-reject-form');
             const rejectForm = document.getElementById('reject-form');
             const approveForm = document.getElementById('approve-form');
 
             if (rejectBtn && rejectForm) {
-                rejectBtn.addEventListener('click', function (e) {
+                rejectBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     console.log('Reject button clicked, showing reject form');
                     rejectForm.classList.remove('hidden');
@@ -116,13 +123,13 @@
             }
 
             if (approveForm) {
-                approveForm.addEventListener('submit', function (e) {
+                approveForm.addEventListener('submit', function(e) {
                     console.log('Approve form submitted to: ' + approveForm.action);
                 });
             }
 
             if (rejectForm) {
-                rejectForm.addEventListener('submit', function (e) {
+                rejectForm.addEventListener('submit', function(e) {
                     console.log('Reject form submitted to: ' + rejectForm.action);
                 });
             }

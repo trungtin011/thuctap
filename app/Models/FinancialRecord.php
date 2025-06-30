@@ -86,12 +86,10 @@ class FinancialRecord extends Model
         return $this->hasMany(MetricValue::class, 'financial_record_id');
     }
 
-    // Accessor cho revenue_sources
-    protected function revenueSources(): Attribute
+    // Quan hệ với bảng trung gian revenue_sources
+    public function revenueSources()
     {
-        return Attribute::make(
-            get: fn() => json_decode($this->note, true)['revenue_sources'] ?? []
-        );
+        return $this->hasMany(FinancialRecordRevenueSource::class, 'financial_record_id');
     }
 
     // Accessor để lấy metric_values từ database
