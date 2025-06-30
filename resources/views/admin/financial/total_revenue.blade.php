@@ -553,6 +553,124 @@
         </div>
 
         <div class="card mt-6">
+            <div class="card-header">
+                <h3 class="card-title">So sánh doanh thu theo tháng</h3>
+            </div>
+            <div class="card-body">
+                <form id="compareMonthsForm" class="mb-4">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Tháng thứ nhất</label>
+                                <select name="compare_month1" class="form-control">
+                                    @for($i = 1; $i <= 12; $i++)
+                                        <option value="{{ $i }}">Tháng {{ $i }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Tháng thứ hai</label>
+                                <select name="compare_month2" class="form-control">
+                                    @for($i = 1; $i <= 12; $i++)
+                                        <option value="{{ $i }}">Tháng {{ $i }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Năm</label>
+                                <select name="compare_year" class="form-control">
+                                    @foreach($years as $year)
+                                        <option value="{{ $year }}">{{ $year }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-primary btn-block">So sánh</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                @if(isset($monthlyComparison))
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Chỉ số</th>
+                                <th>{{ $monthlyComparison['month1']['name'] }}</th>
+                                <th>{{ $monthlyComparison['month2']['name'] }}</th>
+                                <th>Chênh lệch</th>
+                                <th>% Thay đổi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Doanh thu</td>
+                                <td>{{ number_format($monthlyComparison['month1']['revenue']) }} VNĐ</td>
+                                <td>{{ number_format($monthlyComparison['month2']['revenue']) }} VNĐ</td>
+                                <td>{{ number_format($monthlyComparison['difference']['revenue']) }} VNĐ</td>
+                                <td>
+                                    @if($monthlyComparison['month1']['revenue'] > 0)
+                                        {{ number_format(($monthlyComparison['difference']['revenue'] / $monthlyComparison['month1']['revenue']) * 100, 2) }}%
+                                    @else
+                                        N/A
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Chi phí</td>
+                                <td>{{ number_format($monthlyComparison['month1']['expenses']) }} VNĐ</td>
+                                <td>{{ number_format($monthlyComparison['month2']['expenses']) }} VNĐ</td>
+                                <td>{{ number_format($monthlyComparison['difference']['expenses']) }} VNĐ</td>
+                                <td>
+                                    @if($monthlyComparison['month1']['expenses'] > 0)
+                                        {{ number_format(($monthlyComparison['difference']['expenses'] / $monthlyComparison['month1']['expenses']) * 100, 2) }}%
+                                    @else
+                                        N/A
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>ROAS</td>
+                                <td>{{ number_format($monthlyComparison['month1']['roas'], 2) }}</td>
+                                <td>{{ number_format($monthlyComparison['month2']['roas'], 2) }}</td>
+                                <td>{{ number_format($monthlyComparison['difference']['roas'], 2) }}</td>
+                                <td>
+                                    @if($monthlyComparison['month1']['roas'] > 0)
+                                        {{ number_format(($monthlyComparison['difference']['roas'] / $monthlyComparison['month1']['roas']) * 100, 2) }}%
+                                    @else
+                                        N/A
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Hoa hồng</td>
+                                <td>{{ number_format($monthlyComparison['month1']['commission']) }} VNĐ</td>
+                                <td>{{ number_format($monthlyComparison['month2']['commission']) }} VNĐ</td>
+                                <td>{{ number_format($monthlyComparison['difference']['commission']) }} VNĐ</td>
+                                <td>
+                                    @if($monthlyComparison['month1']['commission'] > 0)
+                                        {{ number_format(($monthlyComparison['difference']['commission'] / $monthlyComparison['month1']['commission']) * 100, 2) }}%
+                                    @else
+                                        N/A
+                                    @endif
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                @endif
+            </div>
+        </div>
+
+        <div class="card mt-6">
             <div class="card-header flex flex-row justify-between">
                 <h1 class="h6">Bản Ghi Đã Duyệt Gần Đây</h1>
                 <div class="flex flex-row justify-center items-center">
@@ -723,4 +841,162 @@
             });
         });
     </script>
+@endsection
+
+@section('scripts')
+<script>
+$(document).ready(function() {
+    // Hàm format số
+    function formatNumber(number, decimals = 0) {
+        return new Intl.NumberFormat('vi-VN', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        }).format(number);
+    }
+
+    // Xử lý form so sánh
+    $('#compareMonthsForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const url = window.location.pathname + '?' + new URLSearchParams(formData).toString();
+
+        $.get(url, function(response) {
+            if (response.monthlyComparison) {
+                // Cập nhật biểu đồ
+                const ctx = document.getElementById('monthlyComparisonChart').getContext('2d');
+                if (window.monthlyComparisonChart) {
+                    window.monthlyComparisonChart.destroy();
+                }
+
+                window.monthlyComparisonChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: [response.monthlyComparison.month1.name, response.monthlyComparison.month2.name],
+                        datasets: [
+                            {
+                                label: 'Doanh thu',
+                                data: [response.monthlyComparison.month1.revenue, response.monthlyComparison.month2.revenue],
+                                backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                                borderColor: 'rgb(59, 130, 246)',
+                                borderWidth: 2,
+                                borderRadius: 4,
+                                barThickness: 40
+                            },
+                            {
+                                label: 'Chi phí',
+                                data: [response.monthlyComparison.month1.expenses, response.monthlyComparison.month2.expenses],
+                                backgroundColor: 'rgba(239, 68, 68, 0.5)',
+                                borderColor: 'rgb(239, 68, 68)',
+                                borderWidth: 2,
+                                borderRadius: 4,
+                                barThickness: 40
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 12,
+                                        family: "'Inter', sans-serif"
+                                    },
+                                    padding: 20,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle'
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'So Sánh Doanh Thu và Chi Phí',
+                                font: {
+                                    size: 16,
+                                    weight: 'bold',
+                                    family: "'Inter', sans-serif"
+                                },
+                                padding: {
+                                    top: 10,
+                                    bottom: 30
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                titleColor: '#1f2937',
+                                titleFont: {
+                                    size: 13,
+                                    weight: 'bold',
+                                    family: "'Inter', sans-serif"
+                                },
+                                bodyColor: '#4b5563',
+                                bodyFont: {
+                                    size: 12,
+                                    family: "'Inter', sans-serif"
+                                },
+                                borderColor: '#e5e7eb',
+                                borderWidth: 1,
+                                padding: 12,
+                                displayColors: true,
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        label += formatNumber(context.parsed.y) + ' VNĐ';
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    drawBorder: false,
+                                    color: '#e5e7eb'
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 12,
+                                        family: "'Inter', sans-serif"
+                                    },
+                                    color: '#4b5563',
+                                    padding: 10,
+                                    callback: function(value) {
+                                        return formatNumber(value) + ' VNĐ';
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 12,
+                                        family: "'Inter', sans-serif"
+                                    },
+                                    color: '#4b5563',
+                                    padding: 10
+                                }
+                            }
+                        },
+                        layout: {
+                            padding: {
+                                left: 10,
+                                right: 10,
+                                top: 0,
+                                bottom: 0
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    });
+});
+</script>
 @endsection

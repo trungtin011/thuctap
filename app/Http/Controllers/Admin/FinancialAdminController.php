@@ -9,6 +9,7 @@ use App\Models\FinancialRecord;
 use App\Models\Expense;
 use App\Models\OfficeRevenue;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class FinancialAdminController extends Controller
@@ -274,6 +275,10 @@ class FinancialAdminController extends Controller
         $platform = $request->input('platform');
         $yearFilter = $request->input('yearFilter', 'all');
         $timeFilter = $request->input('timeFilter', 'all');
+        $compareMonth1 = $request->input('compare_month1');
+        $compareMonth2 = $request->input('compare_month2');
+        $compareYear = $request->input('compare_year', date('Y'));
+        $monthlyComparison = null;
 
         // Lấy danh sách nền tảng
         $platforms = \App\Models\Platform::all();
@@ -288,6 +293,93 @@ class FinancialAdminController extends Controller
         } elseif ($timeFilter === '7') {
             $start = Carbon::now()->subDays(6)->toDateString();
             $end = Carbon::now()->toDateString();
+        }
+
+        // Xử lý so sánh doanh thu giữa các tháng
+        if ($compareMonth1 && $compareMonth2) {
+            $month1Start = Carbon::create($compareYear, $compareMonth1, 1)->startOfMonth();
+            $month1End = Carbon::create($compareYear, $compareMonth1, 1)->endOfMonth();
+            $month2Start = Carbon::create($compareYear, $compareMonth2, 1)->startOfMonth();
+            $month2End = Carbon::create($compareYear, $compareMonth2, 1)->endOfMonth();
+
+            // Lấy doanh thu tháng 1 từ financial_records và office_revenues
+            $month1FinancialRecords = FinancialRecord::where('status', 'admin_approved')
+                ->whereBetween('record_date', [$month1Start, $month1End])
+                ->when($platform, function($query) use ($platform) {
+                    return $query->where('platform_id', $platform);
+                })
+                ->get();
+
+            $month1OfficeRevenues = OfficeRevenue::where('status', 'admin_approved')
+                ->whereBetween('record_date', [$month1Start, $month1End])
+                ->get();
+
+            $month1Expenses = Expense::where('status', 'admin_approved')
+                ->whereHas('financialRecord', function($query) use ($month1Start, $month1End, $platform) {
+                    $query->where('status', 'admin_approved')
+                          ->whereBetween('record_date', [$month1Start, $month1End])
+                          ->when($platform, function($q) use ($platform) {
+                              return $q->where('platform_id', $platform);
+                          });
+                })
+                ->get();
+
+            // Lấy doanh thu tháng 2 từ financial_records và office_revenues
+            $month2FinancialRecords = FinancialRecord::where('status', 'admin_approved')
+                ->whereBetween('record_date', [$month2Start, $month2End])
+                ->when($platform, function($query) use ($platform) {
+                    return $query->where('platform_id', $platform);
+                })
+                ->get();
+
+            $month2OfficeRevenues = OfficeRevenue::where('status', 'admin_approved')
+                ->whereBetween('record_date', [$month2Start, $month2End])
+                ->get();
+
+            $month2Expenses = Expense::where('status', 'admin_approved')
+                ->whereHas('financialRecord', function($query) use ($month2Start, $month2End, $platform) {
+                    $query->where('status', 'admin_approved')
+                          ->whereBetween('record_date', [$month2Start, $month2End])
+                          ->when($platform, function($q) use ($platform) {
+                              return $q->where('platform_id', $platform);
+                          });
+                })
+                ->get();
+
+            // Tính toán tổng doanh thu tháng 1
+            $month1TotalRevenue = $month1FinancialRecords->sum('revenue') + $month1OfficeRevenues->sum('total');
+            $month1TotalExpenses = $month1Expenses->sum('amount');
+            $month1TotalCommission = $month1FinancialRecords->sum('commission');
+            $month1AvgRoas = $month1FinancialRecords->avg('roas') ?? 0;
+
+            // Tính toán tổng doanh thu tháng 2
+            $month2TotalRevenue = $month2FinancialRecords->sum('revenue') + $month2OfficeRevenues->sum('total');
+            $month2TotalExpenses = $month2Expenses->sum('amount');
+            $month2TotalCommission = $month2FinancialRecords->sum('commission');
+            $month2AvgRoas = $month2FinancialRecords->avg('roas') ?? 0;
+
+            $monthlyComparison = [
+                'month1' => [
+                    'name' => 'Tháng ' . $compareMonth1,
+                    'revenue' => $month1TotalRevenue,
+                    'expenses' => $month1TotalExpenses,
+                    'roas' => $month1AvgRoas,
+                    'commission' => $month1TotalCommission
+                ],
+                'month2' => [
+                    'name' => 'Tháng ' . $compareMonth2,
+                    'revenue' => $month2TotalRevenue,
+                    'expenses' => $month2TotalExpenses,
+                    'roas' => $month2AvgRoas,
+                    'commission' => $month2TotalCommission
+                ],
+                'difference' => [
+                    'revenue' => $month2TotalRevenue - $month1TotalRevenue,
+                    'expenses' => $month2TotalExpenses - $month1TotalExpenses,
+                    'roas' => $month2AvgRoas - $month1AvgRoas,
+                    'commission' => $month2TotalCommission - $month1TotalCommission
+                ]
+            ];
         }
 
         // Tính toán tổng quan (bao gồm cả office_revenues)
@@ -444,6 +536,7 @@ class FinancialAdminController extends Controller
                 'filteredAvgRoas' => $filteredAvgRoas,
                 'filteredRecordCount' => $filteredRecordCount,
                 'filteredTotalCommission' => $filteredTotalCommission,
+                'monthlyComparison' => $monthlyComparison
             ]);
         }
 
@@ -467,7 +560,8 @@ class FinancialAdminController extends Controller
             'not_approved_count',
             'platforms',
             'year_goal',
-            'records'
+            'records',
+            'monthlyComparison'
         ));
     }
 }
