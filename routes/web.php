@@ -211,3 +211,13 @@ Route::get('/', function () {
 
 // Sai (gây lỗi):
 Route::get('/admin/financial/filter', [FinancialAdminController::class, 'filterCustom']);
+
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'check.role:admin'])->group(function () {
+    // Financial routes
+    Route::get('/financial', [App\Http\Controllers\Admin\FinancialAdminController::class, 'index'])->name('financial.index');
+    Route::get('/financial/total_revenue', [App\Http\Controllers\Admin\FinancialAdminController::class, 'totalRevenue'])->name('financial.total_revenue');
+    Route::get('/financial/history', [App\Http\Controllers\Admin\FinancialAdminController::class, 'history'])->name('financial.history');
+    Route::post('/financial/set-goal', [App\Http\Controllers\Admin\FinancialAdminController::class, 'setGoal'])->name('financial.set_goal');
+    Route::post('/financial/{id}/approve', [App\Http\Controllers\Admin\FinancialAdminController::class, 'approve'])->name('financial.approve');
+    Route::post('/financial/{id}/reject', [App\Http\Controllers\Admin\FinancialAdminController::class, 'reject'])->name('financial.reject');
+});
