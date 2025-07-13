@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use App\Models\FinancialRecord;
 use App\Models\Expense;
 use App\Models\OfficeRevenue;
+use App\Models\Platform;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -269,125 +270,36 @@ class FinancialAdminController extends Controller
 
     public function totalRevenue(Request $request)
     {
-        // Lấy các tham số từ request
-        $start = $request->input('start_date');
-        $end = $request->input('end_date');
-        $platform = $request->input('platform');
-        $yearFilter = $request->input('yearFilter', 'all');
+        // Áp dụng bộ lọc thời gian
+        $start = $request->input('start_date') ? Carbon::parse($request->input('start_date'))->startOfDay() : null;
+        $end = $request->input('end_date') ? Carbon::parse($request->input('end_date'))->endOfDay() : null;
+        $platform = $request->input('platform_id');
+        $yearFilter = $request->input('year', 'all');
         $timeFilter = $request->input('timeFilter', 'all');
-        $compareMonth1 = $request->input('compare_month1');
-        $compareMonth2 = $request->input('compare_month2');
-        $compareYear = $request->input('compare_year', date('Y'));
-        $monthlyComparison = null;
 
-        // Lấy danh sách nền tảng
-        $platforms = \App\Models\Platform::all();
+        // Chuyển đổi định dạng ngày nếu có
+        $start = $start ? Carbon::parse($start)->startOfDay() : null;
+        $end = $end ? Carbon::parse($end)->endOfDay() : null;
 
-        // Xử lý bộ lọc thời gian
+        // Xử lý timeFilter
         if ($timeFilter === 'month') {
-            $start = Carbon::now()->startOfMonth()->toDateString();
-            $end = Carbon::now()->endOfMonth()->toDateString();
+            $start = Carbon::now()->startOfMonth();
+            $end = Carbon::now()->endOfMonth();
         } elseif ($timeFilter === '3months') {
-            $start = Carbon::now()->subMonths(3)->startOfMonth()->toDateString();
-            $end = Carbon::now()->endOfMonth()->toDateString();
-        } elseif ($timeFilter === '7') {
-            $start = Carbon::now()->subDays(6)->toDateString();
-            $end = Carbon::now()->toDateString();
+            $start = Carbon::now()->subMonths(2)->startOfMonth();
+            $end = Carbon::now()->endOfMonth();
         }
 
-        // Xử lý so sánh doanh thu giữa các tháng
-        if ($compareMonth1 && $compareMonth2) {
-            $month1Start = Carbon::create($compareYear, $compareMonth1, 1)->startOfMonth();
-            $month1End = Carbon::create($compareYear, $compareMonth1, 1)->endOfMonth();
-            $month2Start = Carbon::create($compareYear, $compareMonth2, 1)->startOfMonth();
-            $month2End = Carbon::create($compareYear, $compareMonth2, 1)->endOfMonth();
-
-            // Lấy doanh thu tháng 1 từ financial_records và office_revenues
-            $month1FinancialRecords = FinancialRecord::where('status', 'admin_approved')
-                ->whereBetween('record_date', [$month1Start, $month1End])
-                ->when($platform, function($query) use ($platform) {
-                    return $query->where('platform_id', $platform);
-                })
-                ->get();
-
-            $month1OfficeRevenues = OfficeRevenue::where('status', 'admin_approved')
-                ->whereBetween('record_date', [$month1Start, $month1End])
-                ->get();
-
-            $month1Expenses = Expense::where('status', 'admin_approved')
-                ->whereHas('financialRecord', function($query) use ($month1Start, $month1End, $platform) {
-                    $query->where('status', 'admin_approved')
-                          ->whereBetween('record_date', [$month1Start, $month1End])
-                          ->when($platform, function($q) use ($platform) {
-                              return $q->where('platform_id', $platform);
-                          });
-                })
-                ->get();
-
-            // Lấy doanh thu tháng 2 từ financial_records và office_revenues
-            $month2FinancialRecords = FinancialRecord::where('status', 'admin_approved')
-                ->whereBetween('record_date', [$month2Start, $month2End])
-                ->when($platform, function($query) use ($platform) {
-                    return $query->where('platform_id', $platform);
-                })
-                ->get();
-
-            $month2OfficeRevenues = OfficeRevenue::where('status', 'admin_approved')
-                ->whereBetween('record_date', [$month2Start, $month2End])
-                ->get();
-
-            $month2Expenses = Expense::where('status', 'admin_approved')
-                ->whereHas('financialRecord', function($query) use ($month2Start, $month2End, $platform) {
-                    $query->where('status', 'admin_approved')
-                          ->whereBetween('record_date', [$month2Start, $month2End])
-                          ->when($platform, function($q) use ($platform) {
-                              return $q->where('platform_id', $platform);
-                          });
-                })
-                ->get();
-
-            // Tính toán tổng doanh thu tháng 1
-            $month1TotalRevenue = $month1FinancialRecords->sum('revenue') + $month1OfficeRevenues->sum('total');
-            $month1TotalExpenses = $month1Expenses->sum('amount');
-            $month1TotalCommission = $month1FinancialRecords->sum('commission');
-            $month1AvgRoas = $month1FinancialRecords->avg('roas') ?? 0;
-
-            // Tính toán tổng doanh thu tháng 2
-            $month2TotalRevenue = $month2FinancialRecords->sum('revenue') + $month2OfficeRevenues->sum('total');
-            $month2TotalExpenses = $month2Expenses->sum('amount');
-            $month2TotalCommission = $month2FinancialRecords->sum('commission');
-            $month2AvgRoas = $month2FinancialRecords->avg('roas') ?? 0;
-
-            $monthlyComparison = [
-                'month1' => [
-                    'name' => 'Tháng ' . $compareMonth1,
-                    'revenue' => $month1TotalRevenue,
-                    'expenses' => $month1TotalExpenses,
-                    'roas' => $month1AvgRoas,
-                    'commission' => $month1TotalCommission
-                ],
-                'month2' => [
-                    'name' => 'Tháng ' . $compareMonth2,
-                    'revenue' => $month2TotalRevenue,
-                    'expenses' => $month2TotalExpenses,
-                    'roas' => $month2AvgRoas,
-                    'commission' => $month2TotalCommission
-                ],
-                'difference' => [
-                    'revenue' => $month2TotalRevenue - $month1TotalRevenue,
-                    'expenses' => $month2TotalExpenses - $month1TotalExpenses,
-                    'roas' => $month2AvgRoas - $month1AvgRoas,
-                    'commission' => $month2TotalCommission - $month1TotalCommission
-                ]
-            ];
-        }
-
-        // Tính toán tổng quan (bao gồm cả office_revenues)
+        // Tính toán tổng quan
         $totalStats = DB::selectOne("
             SELECT 
-                SUM(fr.revenue) + SUM(orv.total) AS total_revenue,
-                SUM(e.amount) AS total_expenses,
-                AVG(fr.roas) AS avg_roas,
+                (SUM(fr.revenue) + SUM(orv.total)) AS total_revenue,
+                (SELECT SUM(amount) FROM expenses WHERE status = 'admin_approved') AS total_expenses,
+                CASE 
+                    WHEN (SELECT SUM(amount) FROM expenses WHERE status = 'admin_approved') > 0 
+                    THEN (SUM(fr.revenue) + SUM(orv.total)) / (SELECT SUM(amount) FROM expenses WHERE status = 'admin_approved')
+                    ELSE NULL
+                END AS roas,
                 COUNT(DISTINCT fr.id) + COUNT(DISTINCT e.id) + COUNT(DISTINCT orv.id) AS record_count,
                 SUM(fr.commission) AS total_commission
             FROM financial_records fr
@@ -396,7 +308,7 @@ class FinancialAdminController extends Controller
             WHERE fr.status = 'admin_approved'
         ");
 
-        // Tính toán theo bộ lọc
+        // Tính toán dữ liệu được lọc
         $filteredQueryFr = FinancialRecord::where('status', 'admin_approved');
         $filteredQueryOrv = OfficeRevenue::where('status', 'admin_approved');
         $filteredQueryE = Expense::where('status', 'admin_approved');
@@ -404,17 +316,13 @@ class FinancialAdminController extends Controller
         if ($start && $end) {
             $filteredQueryFr->whereBetween('record_date', [$start, $end]);
             $filteredQueryOrv->whereBetween('record_date', [$start, $end]);
-            $filteredQueryE->whereHas('financialRecord', function ($query) use ($start, $end) {
-                $query->whereBetween('record_date', [$start, $end]);
-            });
+            $filteredQueryE->whereBetween('created_at', [$start, $end]); // Sử dụng created_at cho expenses
         }
 
         if ($yearFilter !== 'all') {
             $filteredQueryFr->whereYear('record_date', $yearFilter);
             $filteredQueryOrv->whereYear('record_date', $yearFilter);
-            $filteredQueryE->whereHas('financialRecord', function ($query) use ($yearFilter) {
-                $query->whereYear('record_date', $yearFilter);
-            });
+            $filteredQueryE->whereYear('created_at', $yearFilter);
         }
 
         if ($platform) {
@@ -424,143 +332,255 @@ class FinancialAdminController extends Controller
             });
         }
 
+        // Truy vấn dữ liệu được lọc
         $filteredStats = DB::selectOne("
             SELECT 
-                SUM(fr.revenue) + SUM(orv.total) AS total_revenue,
-                SUM(e.amount) AS total_expenses,
-                AVG(fr.roas) AS avg_roas,
+                (SUM(fr.revenue) + SUM(orv.total)) AS total_revenue,
+                (SELECT SUM(amount) FROM expenses WHERE status = 'admin_approved' 
+                    AND (created_at BETWEEN ? AND ? OR ? IS NULL)
+                    AND (YEAR(created_at) = ? OR ? = 'all')) AS total_expenses,
+                CASE 
+                    WHEN (SELECT SUM(amount) FROM expenses WHERE status = 'admin_approved' 
+                        AND (created_at BETWEEN ? AND ? OR ? IS NULL)
+                        AND (YEAR(created_at) = ? OR ? = 'all')) > 0 
+                    THEN (SUM(fr.revenue) + SUM(orv.total)) / 
+                        (SELECT SUM(amount) FROM expenses WHERE status = 'admin_approved' 
+                        AND (created_at BETWEEN ? AND ? OR ? IS NULL)
+                        AND (YEAR(created_at) = ? OR ? = 'all'))
+                    ELSE NULL
+                END AS roas,
                 COUNT(DISTINCT fr.id) + COUNT(DISTINCT e.id) + COUNT(DISTINCT orv.id) AS record_count,
                 SUM(fr.commission) AS total_commission
             FROM financial_records fr
             LEFT JOIN expenses e ON e.financial_record_id = fr.id
             LEFT JOIN office_revenues orv ON orv.status = 'admin_approved'
             WHERE fr.status = 'admin_approved'
-                AND (fr.record_date BETWEEN ? AND ? OR orv.record_date BETWEEN ? AND ?)
+                AND (fr.record_date BETWEEN ? AND ? OR ? IS NULL)
+                AND (orv.record_date BETWEEN ? AND ? OR ? IS NULL)
                 AND (fr.platform_id = ? OR ? IS NULL)
                 AND (YEAR(fr.record_date) = ? OR ? = 'all')
                 AND (YEAR(orv.record_date) = ? OR ? = 'all')
-        ", [$start, $end, $start, $end, $platform, $platform, $yearFilter, $yearFilter, $yearFilter, $yearFilter]);
+        ", [
+            $start,
+            $end,
+            $start,
+            $yearFilter,
+            $yearFilter,
+            $start,
+            $end,
+            $start,
+            $yearFilter,
+            $yearFilter,
+            $start,
+            $end,
+            $start,
+            $yearFilter,
+            $yearFilter,
+            $start,
+            $end,
+            $start,
+            $start,
+            $end,
+            $start,
+            $platform,
+            $platform,
+            $yearFilter,
+            $yearFilter,
+            $yearFilter,
+            $yearFilter
+        ]);
 
-        // Lấy dữ liệu cho biểu đồ
-        $recordsQuery = FinancialRecord::where('status', 'admin_approved')->with(['platform', 'expenses']);
-        $officeRevenuesQuery = OfficeRevenue::where('status', 'admin_approved');
-
-        if ($start && $end) {
-            $recordsQuery->whereBetween('record_date', [$start, $end]);
-            $officeRevenuesQuery->whereBetween('record_date', [$start, $end]);
-        }
-
-        if ($yearFilter !== 'all') {
-            $recordsQuery->whereYear('record_date', $yearFilter);
-            $officeRevenuesQuery->whereYear('record_date', $yearFilter);
-        }
-
-        if ($platform) {
-            $recordsQuery->where('platform_id', $platform);
-        }
-
-        $records = $recordsQuery->get();
-        $officeRevenues = $officeRevenuesQuery->get();
-
-        // Gán giá trị tổng quan
+        // Gán giá trị tổng quan, đảm bảo không null
         $totalRevenue = $totalStats->total_revenue ?? 0;
-        $total_expenses = $totalStats->total_expenses ?? 0;
-        $avg_roas = $totalStats->avg_roas ?? 0;
-        $record_count = $totalStats->record_count ?? 0;
+        $totalExpenses = $totalStats->total_expenses ?? 0;
+        $avgRoas = $totalStats->roas ?? 0;
+        $recordCount = $totalStats->record_count ?? 0;
         $totalCommission = $totalStats->total_commission ?? 0;
 
-        // Gán giá trị theo bộ lọc
+        // Gán giá trị được lọc
         $filteredTotalRevenue = $filteredStats->total_revenue ?? 0;
         $filteredTotalExpenses = $filteredStats->total_expenses ?? 0;
-        $filteredAvgRoas = $filteredStats->avg_roas ?? 0;
+        $filteredAvgRoas = $filteredStats->roas ?? 0;
         $filteredRecordCount = $filteredStats->record_count ?? 0;
         $filteredTotalCommission = $filteredStats->total_commission ?? 0;
 
-        // Lấy các bản ghi gần đây
-        $recent_records = FinancialRecord::where('status', 'admin_approved')
-            ->with('platform')
-            ->latest()
-            ->take(10)
-            ->get();
+        Log::info('Total Expenses: ' . $totalExpenses);
 
-        // Lấy danh sách năm
-        $years = collect([
-            FinancialRecord::where('status', 'admin_approved')->select(DB::raw('YEAR(record_date) as year'))->distinct()->pluck('year'),
-            OfficeRevenue::where('status', 'admin_approved')->select(DB::raw('YEAR(record_date) as year'))->distinct()->pluck('year'),
-        ])->flatten()->unique()->sort()->values();
+        // Lấy danh sách các năm
+        $years = FinancialRecord::where('status', 'admin_approved')
+            ->pluck('record_date')
+            ->merge(OfficeRevenue::where('status', 'admin_approved')->pluck('record_date'))
+            ->map(function ($date) {
+                return Carbon::parse($date)->year;
+            })
+            ->unique()
+            ->sort()
+            ->values();
 
-        // Dữ liệu biểu đồ
-        $labels = [];
+        // Lấy danh sách nền tảng
+        $platforms = Platform::all();
+
+        // Lấy bản ghi gần đây
+        $recentRecordsQuery = FinancialRecord::where('status', 'admin_approved')
+            ->with(['platform', 'submittedBy', 'department'])
+            ->orderBy('record_date', 'desc')
+            ->take(10);
+
+        if ($platform) {
+            $recentRecordsQuery->where('platform_id', $platform);
+        }
+        if ($start && $end) {
+            $recentRecordsQuery->whereBetween('record_date', [$start, $end]);
+        }
+        if ($yearFilter !== 'all') {
+            $recentRecordsQuery->whereYear('record_date', $yearFilter);
+        }
+
+        $recent_records = $recentRecordsQuery->get();
+
+        // Lấy bản ghi financial_records và office_revenues
+        $records = $filteredQueryFr->with(['platform', 'submittedBy', 'department'])->get();
+        $office_revenues = $filteredQueryOrv->with(['department', 'submittedBy', 'offices'])->get();
+
+        // Tính số lượng bản ghi đã duyệt và chưa duyệt
+        $approved_count = FinancialRecord::where('status', 'admin_approved')->count() +
+            Expense::where('status', 'admin_approved')->count() +
+            OfficeRevenue::where('status', 'admin_approved')->count();
+        $not_approved_count = FinancialRecord::where('status', 'manager_approved')->count() +
+            Expense::where('status', 'manager_approved')->count() +
+            OfficeRevenue::where('status', 'manager_approved')->count();
+
+        // Tạo dữ liệu cho biểu đồ
+        $dates = [];
+        if ($start && $end) {
+            $dates = collect(Carbon::parse($start)->toPeriod($end))->map(function ($date) {
+                return $date->format('Y-m-d');
+            })->toArray();
+        } else {
+            $dates = FinancialRecord::where('status', 'admin_approved')
+                ->pluck('record_date')
+                ->merge(OfficeRevenue::where('status', 'admin_approved')->pluck('record_date'))
+                ->unique()
+                ->map(function ($date) {
+                    return Carbon::parse($date)->format('Y-m-d');
+                })
+                ->sort()
+                ->values()
+                ->toArray();
+        }
+
+        // Lấy dữ liệu doanh thu, chi phí và ROAS theo ngày
         $data = [];
         $expenseData = [];
+        $roasData = [];
+        foreach ($dates as $date) {
+            $dailyRevenueSum = $records->where('record_date', $date)->sum('revenue') +
+                $office_revenues->where('record_date', $date)->sum('total');
+            $data[] = $dailyRevenueSum;
 
-        $allRecords = $records->concat($officeRevenues);
-        if ($allRecords->count() > 0) {
-            $dates = $allRecords->pluck('record_date')->unique()->sort()->values();
+            $dailyExpenseSum = Expense::whereIn(
+                'financial_record_id',
+                $records->where('record_date', $date)->pluck('id')
+            )->sum('amount');
+            $expenseData[] = $dailyExpenseSum;
 
-            foreach ($dates as $date) {
-                $labels[] = Carbon::parse($date)->format('d/m');
-                $dailyRevenueSum = $records->where('record_date', $date)->sum('revenue') +
-                                   $officeRevenues->where('record_date', $date)->sum('total');
-                $data[] = $dailyRevenueSum;
-
-                $dailyExpenseSum = Expense::whereIn(
-                    'financial_record_id',
-                    $records->where('record_date', $date)->pluck('id')
-                )->sum('amount');
-                $expenseData[] = $dailyExpenseSum;
-            }
+            $roasData[] = $dailyExpenseSum > 0 ? $dailyRevenueSum / $dailyExpenseSum : 0;
         }
 
-        // Biểu đồ tròn
-        $platformData = $recent_records->groupBy('platform.name')->map->sum('revenue')->toArray();
+        // Chuẩn bị nhãn cho biểu đồ
+        $labels = array_map(function ($date) {
+            return Carbon::parse($date)->format('d/m/Y');
+        }, $dates);
 
-        // Thống kê bản ghi
-        $approved_count = FinancialRecord::where('status', 'admin_approved')->count() +
-                          Expense::where('status', 'admin_approved')->count() +
-                          OfficeRevenue::where('status', 'admin_approved')->count();
-        $not_approved_count = FinancialRecord::where('status', '!=', 'admin_approved')->count() +
-                              Expense::where('status', '!=', 'admin_approved')->count() +
-                              OfficeRevenue::where('status', '!=', 'admin_approved')->count();
+        // Xử lý so sánh tháng
+        $compareMonth1 = $request->input('compare_month1', 1);
+        $compareMonth2 = $request->input('compare_month2', 2);
+        $compareYear = $request->input('compare_year', now()->year);
+        $platform = $request->input('platform_id');
 
-        $year_goal = cache('year_goal_' . date('Y'));
+        $monthlyComparison = [];
 
-        if ($request->ajax()) {
-            return response()->json([
-                'labels' => $labels,
-                'data' => $data,
-                'expenseData' => $expenseData,
-                'platformData' => $platformData,
-                'filteredTotalRevenue' => $filteredTotalRevenue,
-                'filteredTotalExpenses' => $filteredTotalExpenses,
-                'filteredAvgRoas' => $filteredAvgRoas,
-                'filteredRecordCount' => $filteredRecordCount,
-                'filteredTotalCommission' => $filteredTotalCommission,
-                'monthlyComparison' => $monthlyComparison
+        foreach ([$compareMonth1, $compareMonth2] as $month) {
+            $startOfMonth = Carbon::create($compareYear, $month, 1)->startOfMonth();
+            $endOfMonth = $startOfMonth->copy()->endOfMonth();
+
+            $stats = DB::selectOne("
+                SELECT 
+                    (SUM(fr.revenue) + SUM(orv.total)) AS total_revenue,
+                    (SELECT SUM(amount) FROM expenses WHERE status = 'admin_approved' 
+                        AND created_at BETWEEN ? AND ?) AS total_expenses,
+                    CASE 
+                        WHEN (SELECT SUM(amount) FROM expenses WHERE status = 'admin_approved' 
+                            AND created_at BETWEEN ? AND ?) > 0 
+                        THEN (SUM(fr.revenue) + SUM(orv.total)) / 
+                             (SELECT SUM(amount) FROM expenses WHERE status = 'admin_approved' 
+                             AND created_at BETWEEN ? AND ?)
+                        ELSE NULL
+                    END AS roas,
+                    SUM(fr.commission) AS total_commission
+                FROM financial_records fr
+                LEFT JOIN office_revenues orv ON orv.status = 'admin_approved'
+                    AND orv.record_date BETWEEN ? AND ?
+                WHERE fr.status = 'admin_approved'
+                    AND fr.record_date BETWEEN ? AND ?
+                    AND (fr.platform_id = ? OR ? IS NULL)
+            ", [
+                $startOfMonth,
+                $endOfMonth,
+                $startOfMonth,
+                $endOfMonth,
+                $startOfMonth,
+                $endOfMonth,
+                $startOfMonth,
+                $endOfMonth,
+                $startOfMonth,
+                $endOfMonth,
+                $platform,
+                $platform
             ]);
+
+            $monthlyComparison['month' . ($month == $compareMonth1 ? 1 : 2)] = [
+                'name' => 'Tháng ' . $month,
+                'revenue' => $stats->total_revenue ?? 0,
+                'expenses' => $stats->total_expenses ?? 0,
+                'roas' => $stats->roas ?? 0,
+                'commission' => $stats->total_commission ?? 0,
+            ];
         }
 
+        $monthlyComparison['year'] = $compareYear;
+        $monthlyComparison['difference'] = [
+            'revenue' => $monthlyComparison['month2']['revenue'] - $monthlyComparison['month1']['revenue'],
+            'expenses' => $monthlyComparison['month2']['expenses'] - $monthlyComparison['month1']['expenses'],
+            'roas' => $monthlyComparison['month2']['roas'] - $monthlyComparison['month1']['roas'],
+            'commission' => $monthlyComparison['month2']['commission'] - $monthlyComparison['month1']['commission'],
+        ];
+
+        Log::info('Monthly Comparison: ' . json_encode($monthlyComparison));
+
+        // Trả về view với dữ liệu
         return view('admin.financial.total_revenue', compact(
             'totalRevenue',
-            'total_expenses',
-            'avg_roas',
-            'record_count',
+            'totalExpenses',
+            'avgRoas',
+            'recordCount',
             'totalCommission',
             'filteredTotalRevenue',
             'filteredTotalExpenses',
             'filteredAvgRoas',
             'filteredRecordCount',
             'filteredTotalCommission',
-            'recent_records',
-            'years',
             'labels',
             'data',
             'expenseData',
+            'roasData',
+            'platforms',
+            'years',
+            'recent_records',
             'approved_count',
             'not_approved_count',
-            'platforms',
-            'year_goal',
             'records',
+            'office_revenues',
             'monthlyComparison'
         ));
     }
