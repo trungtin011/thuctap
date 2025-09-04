@@ -6,35 +6,25 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Log;
 
 class CheckRole
 {
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        // Kiểm tra nếu chưa đăng nhập
-        if (!Auth::check() && !Auth::guard('admin')->check()) {
-            return redirect()->route('login');
-        }
-
-        // Kiểm tra guard 'web' (người dùng thông thường)
-        if (Auth::guard('web')->check()) {
-            // Người dùng thông thường chỉ được phép nếu $roles chứa 'user'
-            if (in_array('user', $roles)) {
+        if (Auth::check()) {
+            $user = Auth::user();
+            $userRoleName = $user->role->level ?? null;
+            Log::info('Debug Role Check', [
+                'user_id' => $user->id,
+                'role_id' => $user->role_id,
+                'role_name' => $userRoleName,
+                'expected_roles' => $roles
+            ]);
+            if ($userRoleName && in_array(strtolower($userRoleName), array_map('strtolower', $roles))) {
                 return $next($request);
             }
-            return redirect('/404');
         }
-
-        // Kiểm tra guard 'admin' (quản trị viên)
-        if (Auth::guard('admin')->check()) {
-            $admin = Auth::guard('admin')->user();
-            // Kiểm tra nếu vai trò của admin nằm trong danh sách $roles
-            if (in_array($admin->role, $roles)) {
-                return $next($request);
-            }
-            return redirect('/404');
-        }
-
-        return redirect()->route('login');
+        return response()->view('errors.403', [], 403);
     }
 }
